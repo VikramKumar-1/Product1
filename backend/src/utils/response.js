@@ -1,0 +1,15 @@
+/**
+ * Centralised response helpers.
+ * Every API response follows the same shape:
+ *   { success, message, ...data }
+ */
+
+const sendSuccess = (res, statusCode, message, data = {}) => {
+  res.status(statusCode).json({ success: true, message, ...data });
+};
+
+const sendError = (res, statusCode, message) => {
+  res.status(statusCode).json({ success: false, message });
+};
+
+module.exports = { sendSuccess, sendError };
