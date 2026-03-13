@@ -24,6 +24,154 @@ const roomItems = [
   { icon: <IconUsers size={16}/>, label: "Co-living", sub: "Shared urban spaces", color: "#ec4899" },
 ];
 
+/* ══════════════════════════════════════ MOBILE AUTH POPUP ══════════════════════════════════════ */
+// 🔁 Replace this with your real auth check e.g. const { isLoggedIn } = useAuth()
+/* internal — replace return value with your real auth check */
+function useIsLoggedIn() { return false; }
+
+export function MobileAuthPopup({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const benefits = [
+    { icon: "🏠", text: "Book rooms & services instantly" },
+    { icon: "⚡", text: "Real-time availability & pricing" },
+    { icon: "🔒", text: "Secure payments & verified listings" },
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          animation: "mab-overlayIn 0.22s ease both",
+        }}
+      />
+
+      {/* Bottom sheet */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
+        background: "#fff",
+        borderRadius: "24px 24px 0 0",
+        padding: "0 0 max(24px, env(safe-area-inset-bottom)) 0",
+        boxShadow: "0 -8px 60px rgba(0,0,0,0.22)",
+        animation: "mab-sheetUp 0.38s cubic-bezier(0.34,1.05,0.64,1) both",
+      }}>
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: "12px", paddingBottom: "4px" }}>
+          <div style={{ width: "36px", height: "4px", borderRadius: "100px", background: "#e2e8f0" }} />
+        </div>
+
+        {/* Close btn */}
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute", top: "16px", right: "16px",
+            width: "30px", height: "30px", borderRadius: "50%",
+            background: "#f1f5f9", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#64748b",
+          }}
+        >
+          <IconX size={14} />
+        </button>
+
+        <div style={{ padding: "16px 22px 0" }}>
+          {/* Headline */}
+          <div style={{ marginBottom: "18px" }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: "6px",
+              background: "#eff6ff", border: "1px solid #bfdbfe",
+              borderRadius: "50px", padding: "4px 12px", marginBottom: "10px",
+            }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2563eb", display: "inline-block", animation: "mab-pulse 2s ease infinite" }} />
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#1d4ed8", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'DM Sans',sans-serif" }}>
+                Free to join
+              </span>
+            </div>
+            <h2 style={{
+              fontFamily: "'DM Sans',sans-serif", fontWeight: 800,
+              fontSize: "22px", color: "#0d1526",
+              letterSpacing: "-0.8px", lineHeight: 1.18,
+              margin: "0 0 6px 0",
+            }}>
+              Get the full CityMate<br />experience 🏙️
+            </h2>
+            <p style={{ fontSize: "13.5px", color: "#7c8fa6", lineHeight: 1.6, margin: 0, fontFamily: "'DM Sans',sans-serif" }}>
+              Sign up free to book, save & explore everything your city has to offer.
+            </p>
+          </div>
+
+          {/* Benefits */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+            {benefits.map((b, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                background: "#f8fafc", border: "1px solid #f1f5f9",
+                borderRadius: "12px", padding: "10px 14px",
+              }}>
+                <span style={{ fontSize: "18px", lineHeight: 1, flexShrink: 0 }}>{b.icon}</span>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#334155", fontFamily: "'DM Sans',sans-serif" }}>{b.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
+            <button
+              onClick={() => { navigate("/signup"); onClose(); }}
+              style={{
+                width: "100%", height: "52px", borderRadius: "14px",
+                background: "#1e40af", color: "#fff", border: "none", cursor: "pointer",
+                fontSize: "15px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                boxShadow: "0 4px 20px rgba(30,64,175,0.35)",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "#1e40af"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Create free account
+            </button>
+
+            <button
+              onClick={() => { navigate("/login"); onClose(); }}
+              style={{
+                width: "100%", height: "48px", borderRadius: "14px",
+                background: "#f7f9fc", color: "#1e40af",
+                border: "1.5px solid #bfdbfe", cursor: "pointer",
+                fontSize: "14.5px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "#f7f9fc"; }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Already have an account? Log in
+            </button>
+          </div>
+
+          {/* Skip */}
+          <p style={{ textAlign: "center", fontSize: "12px", color: "#94a3b8", fontFamily: "'DM Sans',sans-serif", marginBottom: "4px" }}>
+            <button
+              onClick={onClose}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "12px", fontFamily: "'DM Sans',sans-serif", textDecoration: "underline", padding: 0 }}
+            >
+              Maybe later, just browsing
+            </button>
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════ MOBILE AUTH GATE (wrap around interactive elements) ══════════════════════════════════════ */
 /* ══════════════════════════════════════ DESKTOP MEGA MENU ══════════════════════════════════════ */
 function MegaMenu({ label, items }: { label: string; items: typeof serviceItems }) {
   const [open, setOpen] = useState(false);
@@ -37,16 +185,16 @@ function MegaMenu({ label, items }: { label: string; items: typeof serviceItems 
         color: open ? "#fff" : "rgba(255,255,255,0.75)",
         background: open ? "rgba(255,255,255,0.1)" : "transparent",
         border: "none", cursor: "pointer",
-        padding: "8px 14px", borderRadius: "10px",
-        fontSize: "14px", fontWeight: 500,
+        padding: "7px 12px", borderRadius: "10px",
+        fontSize: "13.5px", fontWeight: 500,
         fontFamily: "'DM Sans',sans-serif",
         transition: "all 0.18s", letterSpacing: "0.01em",
       }}>
         {label}
-        <IconChevronDown size={13} style={{ transition: "transform 0.25s", transform: open ? "rotate(180deg)" : "rotate(0deg)", opacity: 0.7 }} />
+        <IconChevronDown size={12} style={{ transition: "transform 0.25s", transform: open ? "rotate(180deg)" : "rotate(0deg)", opacity: 0.7 }} />
       </button>
       <div style={{
-        position: "absolute", top: "calc(100% + 14px)", left: "50%",
+        position: "absolute", top: "calc(100% + 12px)", left: "50%",
         width: "260px", zIndex: 1000,
         background: "rgba(7,11,22,0.98)",
         backdropFilter: "blur(32px) saturate(1.4)",
@@ -67,7 +215,7 @@ function MegaMenu({ label, items }: { label: string; items: typeof serviceItems 
           onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `${item.color}18`, color: item.color }}>{item.icon}</div>
+            <div style={{ width: "34px", height: "34px", borderRadius: "10px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `${item.color}18`, color: item.color }}>{item.icon}</div>
             <div>
               <div style={{ color: "#fff", fontSize: "13px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif" }}>{item.label}</div>
               <div style={{ color: "rgba(255,255,255,0.34)", fontSize: "11.5px", marginTop: "2px", fontFamily: "'DM Sans',sans-serif" }}>{item.sub}</div>
@@ -108,7 +256,7 @@ function CitySearchField({ value, onChange }: { value: string; onChange: (v: str
   }, []);
 
   return (
-    <div ref={wrapRef} style={{ flex: 1, minWidth: 0, position: "relative", height: "100%" }}>
+    <div ref={wrapRef} style={{ flex: 1, minWidth: 0, position: "relative", height: "100%", overflow: "visible" }}>
       <div style={{ display: "flex", alignItems: "center", height: "100%", padding: "0 8px 0 20px", gap: "10px" }}>
         <IconMapPin size={17} style={{ color: open ? "#2563eb" : "#94a3b8", flexShrink: 0, transition: "color 0.2s" }} />
         <input
@@ -116,7 +264,7 @@ function CitySearchField({ value, onChange }: { value: string; onChange: (v: str
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder="Enter your Pincode or City"
-          style={{ background: "transparent", border: "none", outline: "none", color: "#0f172a", fontSize: "15px", fontWeight: 400, fontFamily: "'DM Sans',sans-serif", width: "100%", padding: 0 }}
+          style={{ background: "transparent", border: "none", outline: "none", color: "#0f172a", fontSize: "14.5px", fontWeight: 400, fontFamily: "'DM Sans',sans-serif", width: "100%", padding: 0 }}
         />
         {value && (
           <button onClick={e => { e.stopPropagation(); onChange(""); inputRef.current?.focus(); }}
@@ -127,10 +275,10 @@ function CitySearchField({ value, onChange }: { value: string; onChange: (v: str
       </div>
       {open && filtered.length > 0 && (
         <div style={{
-          position: "absolute", top: "calc(100% + 14px)", left: "-20px",
-          minWidth: "300px", width: "calc(100% + 20px)",
-          background: "#fff", border: "1px solid #e8edf5", borderRadius: "20px",
-          overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.16)",
+          position: "absolute", top: "calc(100% + 10px)", left: 0,
+          minWidth: "280px", width: "300px",
+          background: "#fff", border: "1px solid #e8edf5", borderRadius: "16px",
+          overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
           zIndex: 99999, animation: "cmDropIn 0.18s ease both",
         }}>
           <div style={{ padding: "12px 16px 6px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#94a3b8", fontFamily: "'DM Sans',sans-serif" }}>Popular Cities</div>
@@ -171,14 +319,14 @@ function MobileSearchBar() {
   }, []);
 
   return (
-    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+    <div ref={ref} style={{ position: "relative", width: "100%", zIndex: 50 }}>
       <div style={{
         display: "flex", alignItems: "center",
         background: focused ? "#fff" : "rgba(255,255,255,0.13)",
         backdropFilter: focused ? "none" : "blur(20px)",
         WebkitBackdropFilter: focused ? "none" : "blur(20px)",
         border: focused ? "2px solid #2563eb" : "1.5px solid rgba(255,255,255,0.24)",
-        borderRadius: "14px", padding: "0 6px 0 16px", height: "52px",
+        borderRadius: "10px", padding: "0 4px 0 12px", height: "38px",
         transition: "all 0.22s cubic-bezier(0.4,0,0.2,1)",
         boxShadow: focused ? "0 0 0 4px rgba(37,99,235,0.12)" : "none",
       }}>
@@ -188,21 +336,21 @@ function MobileSearchBar() {
           onChange={e => { setCity(e.target.value); setDropOpen(true); }}
           onFocus={() => { setFocused(true); setDropOpen(true); }}
           placeholder="Search city or pincode…"
-          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: focused ? "#0f172a" : "#fff", fontSize: "15px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", padding: "0 10px" }}
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: focused ? "#0f172a" : "#fff", fontSize: "14.5px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", padding: "0 10px" }}
         />
-        <button style={{ background: "#2563eb", color: "#fff", border: "none", cursor: "pointer", width: "40px", height: "40px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.2s" }}
+        <button style={{ background: "#2563eb", color: "#fff", border: "none", cursor: "pointer", width: "28px", height: "28px", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.2s" }}
           onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; }}
         >
-          <IconSearch size={16} strokeWidth={2.5} />
+          <IconSearch size={15} strokeWidth={2.5} />
         </button>
       </div>
       {dropOpen && filtered.length > 0 && (
         <div style={{
-          position: "absolute", top: "calc(100% + 10px)", left: 0, right: 0,
-          background: "#fff", borderRadius: "16px", border: "1px solid #e8edf5",
-          boxShadow: "0 20px 56px rgba(0,0,0,0.18)", overflow: "hidden",
-          zIndex: 9999, animation: "cmDropIn 0.18s ease both",
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
+          background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0",
+          boxShadow: "0 20px 48px rgba(0,0,0,0.22)", overflow: "hidden",
+          zIndex: 99999, animation: "cmDropIn 0.18s ease both",
         }}>
           <div style={{ padding: "10px 16px 6px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#94a3b8", fontFamily: "'DM Sans',sans-serif" }}>Popular Cities</div>
           <div style={{ padding: "2px 8px 10px", display: "grid", gridTemplateColumns: "1fr 1fr" }}>
@@ -212,7 +360,7 @@ function MobileSearchBar() {
                 onMouseEnter={e => (e.currentTarget.style.background = "#f0f7ff")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
-                <div style={{ width: "26px", height: "26px", borderRadius: "7px", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <IconMapPin size={12} style={{ color: "#2563eb" }} />
                 </div>
                 {c}
@@ -228,18 +376,19 @@ function MobileSearchBar() {
 /* ══════════════════════════════════════ MOBILE DRAWER ══════════════════════════════════════ */
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const [section, setSection] = useState<null | "services" | "rooms">(null);
+  const navigate = useNavigate();
 
   const menuGroups = [
     {
       items: [
-        { label: "Services", sub: "Home, transport, food & more", hasChildren: true, key: "services" as const },
-        { label: "Rooms & Stays", sub: "Homes, PGs, co-living & more", hasChildren: true, key: "rooms" as const },
+        { label: "Services",       sub: "Home, transport, food & more",   hasChildren: true,  key: "services" as const, path: null },
+        { label: "Rooms & Stays",  sub: "Homes, PGs, co-living & more",   hasChildren: true,  key: "rooms" as const,    path: null },
       ]
     },
     {
       items: [
-        { label: "Become a Partner", sub: "List your property or service", hasChildren: false, key: null },
-        { label: "Explore", sub: "Discover what's near you", hasChildren: false, key: null },
+        { label: "Become a Partner", sub: "List your property or service", hasChildren: false, key: null, path: "/become-a-partner" },
+        { label: "Explore",          sub: "Discover what's near you",      hasChildren: false, key: null, path: "/explore" },
       ]
     },
   ];
@@ -257,12 +406,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         animation: "cmDrawerUp 0.36s cubic-bezier(0.34,1.05,0.64,1) both",
         overflow: "hidden",
       }}>
-        {/* Handle bar */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: "12px" }}>
           <div style={{ width: "36px", height: "4px", borderRadius: "100px", background: "rgba(255,255,255,0.12)" }} />
         </div>
 
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 10px" }}>
           {section ? (
             <button onClick={() => setSection(null)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans',sans-serif", fontSize: "14px", fontWeight: 500, padding: 0 }}>
@@ -276,7 +423,6 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Body */}
         <div style={{ flex: 1, overflowY: "auto", padding: "2px 10px 40px" }}>
           {!section && (
             <div style={{ animation: "cmFadeSlide 0.22s ease both" }}>
@@ -285,50 +431,39 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                   {gi > 0 && <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "8px 6px" }} />}
                   {group.items.map((item, ii) => (
                     <button key={ii}
-                      onClick={() => item.hasChildren && setSection(item.key)}
+                      onClick={() => {
+                        if (item.hasChildren) { setSection(item.key as "services" | "rooms"); }
+                        else if (item.path) { navigate(item.path); onClose(); }
+                      }}
                       style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 10px", borderRadius: "12px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                     >
                       <div>
-                        <div style={{ color: "#fff", fontSize: "15px", fontWeight: 600, fontFamily: "'DM Sans',sans-serif" }}>{item.label}</div>
+                        <div style={{ color: item.label === "Become a Partner" ? "#60a5fa" : "#fff", fontSize: "15px", fontWeight: 600, fontFamily: "'DM Sans',sans-serif" }}>{item.label}</div>
                         <div style={{ color: "rgba(255,255,255,0.33)", fontSize: "12px", marginTop: "2px", fontFamily: "'DM Sans',sans-serif" }}>{item.sub}</div>
                       </div>
-                      {item.hasChildren && <IconChevronRight size={15} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />}
+                      {item.hasChildren
+                        ? <IconChevronRight size={15} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                        : item.path ? <IconArrowRight size={14} style={{ color: "#60a5fa", flexShrink: 0 }} /> : null
+                      }
                     </button>
                   ))}
                 </div>
               ))}
 
-              {/* Auth row inside drawer */}
               <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "10px 6px" }} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", padding: "6px 0" }}>
                 <Link to="/login" style={{ textDecoration: "none" }} onClick={onClose}>
-                  <button style={{
-                    width: "100%", padding: "13px 0", borderRadius: "12px",
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    color: "rgba(255,255,255,0.82)", fontSize: "14px", fontWeight: 600,
-                    fontFamily: "'DM Sans',sans-serif", cursor: "pointer",
-                    transition: "all 0.15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.10)"; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.82)"; }}
-                  >
-                    <IconLogin size={15} />Log In
-                  </button>
+                  <button style={{ width: "100%", padding: "13px 0", borderRadius: "12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,0.82)", fontSize: "14px", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", transition: "all 0.15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.10)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                  ><IconLogin size={15} />Log In</button>
                 </Link>
                 <Link to="/signup" style={{ textDecoration: "none" }} onClick={onClose}>
-                  <button style={{
-                    width: "100%", padding: "13px 0", borderRadius: "12px",
-                    background: "#2563eb", border: "none",
-                    color: "#fff", fontSize: "14px", fontWeight: 700,
-                    fontFamily: "'DM Sans',sans-serif", cursor: "pointer",
-                    transition: "background 0.15s",
-                    boxShadow: "0 4px 16px rgba(37,99,235,0.38)",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; }}
+                  <button style={{ width: "100%", padding: "13px 0", borderRadius: "12px", background: "#2563eb", border: "none", color: "#fff", fontSize: "14px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", transition: "background 0.15s", boxShadow: "0 4px 16px rgba(37,99,235,0.38)" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; }}
                   >Sign Up Free</button>
                 </Link>
               </div>
@@ -401,6 +536,34 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [city, setCity] = useState("");
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
+  const isLoggedIn = useIsLoggedIn();
+  const navigate = useNavigate();
+
+  // Show auth popup on first interaction after 3s on mobile
+  useEffect(() => {
+    if (isLoggedIn) return;
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+
+    // Trigger after 3 seconds of idle browsing
+    const timer = setTimeout(() => {
+      setShowAuthPopup(true);
+    }, 3000);
+
+    // Also trigger on any tap/touch
+    const onTouch = () => {
+      clearTimeout(timer);
+      setShowAuthPopup(true);
+      document.removeEventListener("touchstart", onTouch);
+    };
+    document.addEventListener("touchstart", onTouch, { once: true, passive: true });
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("touchstart", onTouch);
+    };
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 10);
@@ -445,18 +608,21 @@ export default function Navbar() {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes mab-overlayIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes mab-sheetUp {
+          from { transform: translateY(100%); }
+          to   { transform: translateY(0); }
+        }
+        @keyframes mab-pulse {
+          0%,100% { opacity:0.5; transform:scale(1); }
+          50%      { opacity:1; transform:scale(1.2); }
+        }
 
         .cm-bg { animation: heroPan 24s ease-in-out infinite alternate; }
         .cm-f2 { animation: fadeUp 0.8s 0.08s cubic-bezier(.22,.68,0,1.2) both; }
         .cm-f3 { animation: fadeUp 0.8s 0.18s cubic-bezier(.22,.68,0,1.2) both; }
         .cm-f4 { animation: fadeUp 0.8s 0.28s cubic-bezier(.22,.68,0,1.2) both; }
 
-        /*
-         * FIX: -webkit-background-clip:text clips at the tight line-box boundary,
-         * cutting off descenders on the last letter of gradient text.
-         * padding-bottom + a negative margin-bottom of the same value expands the
-         * paint area without shifting layout, so the full glyph is always visible.
-         */
         .cm-shimmer {
           display: inline-block;
           background: linear-gradient(90deg,#93c5fd 0%,#818cf8 30%,#c4b5fd 50%,#818cf8 70%,#93c5fd 100%);
@@ -473,7 +639,7 @@ export default function Navbar() {
           background: #fff; border-radius: 100px;
           box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 12px 48px rgba(0,0,0,0.28);
           display: flex; align-items: stretch;
-          height: 60px; position: relative; overflow: visible;
+          height: 48px; position: relative; overflow: visible;
           padding: 5px; border: 1.5px solid rgba(255,255,255,0.9);
           transition: box-shadow 0.3s;
         }
@@ -482,65 +648,63 @@ export default function Navbar() {
         }
         .cm-search-btn {
           background: #2563eb; color: #fff; border: none; cursor: pointer;
-          font-family: 'DM Sans',sans-serif; font-size: 14.5px; font-weight: 600;
+          font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 600;
           display: flex; align-items: center; gap: 8px;
-          padding: 0 26px; border-radius: 100px;
+          padding: 0 24px; border-radius: 100px;
           transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
           height: 100%;
         }
         .cm-search-btn:hover { background: #1d4ed8; }
         .cm-navlink:hover { color: #fff !important; background: rgba(255,255,255,0.1) !important; }
 
-        /* ─── MOBILE ─── */
         @media (max-width: 768px) {
           .cm-desktop-only { display: none !important; }
           .cm-mobile-only  { display: flex !important; }
-          .cm-hero-wrap    { min-height: 100svh !important; }
-          .cm-hero-pad     { padding: 88px 16px 48px !important; }
+          .cm-hero-wrap    { min-height: 0 !important; }
+          .cm-hero-pad     { padding: 44px 14px 22px !important; }
           .cm-headline     {
-            font-size: clamp(30px, 8vw, 42px) !important;
-            letter-spacing: -1.2px !important;
-            line-height: 1.12 !important;
+            font-size: clamp(18px, 5.5vw, 26px) !important;
+            letter-spacing: -0.8px !important;
+            line-height: 1.08 !important;
           }
-          .cm-subline { font-size: 13.5px !important; margin-bottom: 24px !important; line-height: 1.65 !important; }
+          .cm-subline { font-size: 11.5px !important; margin-bottom: 12px !important; line-height: 1.5 !important; }
         }
         @media (min-width: 769px) {
           .cm-mobile-only { display: none !important; }
         }
-
-        /* Extra small phones */
         @media (max-width: 360px) {
-          .cm-hero-pad { padding: 82px 14px 40px !important; }
-          .cm-headline { font-size: 28px !important; }
-          .cm-logo-text { font-size: 16px !important; }
+          .cm-hero-pad { padding: 40px 12px 18px !important; }
+          .cm-headline { font-size: 17px !important; }
+          .cm-logo-text { font-size: 15px !important; }
         }
       `}</style>
 
-      <div className="cm-hero-wrap" style={{ position: "relative", minHeight: "720px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div className="cm-hero-wrap" style={{ position: "relative", minHeight: "420px", display: "flex", flexDirection: "column", overflow: "visible", marginTop: "40px" }}>
+        {/* Bg image extends 44px above to show behind fixed transparent nav */}
+        <div style={{ position: "absolute", top: "-40px", left: 0, right: 0, bottom: 0, overflow: "hidden", zIndex: 0 }}>
+          <div className="cm-bg" style={{ position: "absolute", inset: "-5%", backgroundImage: "url(https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=90)", backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.85)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(3,6,18,0.5) 0%, rgba(3,6,18,0.08) 35%, rgba(3,6,18,0.35) 65%, rgba(3,6,18,0.97) 100%)" }} />
+        </div>
 
-        {/* Background */}
-        <div className="cm-bg" style={{ position: "absolute", inset: "-5%", backgroundImage: "url(https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=90)", backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.85)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(3,6,18,0.85) 0%, rgba(3,6,18,0.18) 40%, rgba(3,6,18,0.45) 68%, rgba(3,6,18,0.97) 100%)" }} />
-
-        {/* ════════ NAVBAR ════════ */}
+        {/* ════════ NAVBAR — height reduced to 56px ════════ */}
         <nav style={{
-          position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
-          height: "64px",
-          background: scrolled ? "rgba(3,6,18,0.95)" : "transparent",
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 9990,
+          height: "40px",
+          background: scrolled ? "rgba(3,6,18,0.92)" : "transparent",
           backdropFilter: scrolled ? "blur(24px) saturate(1.6)" : "none",
           WebkitBackdropFilter: scrolled ? "blur(24px) saturate(1.6)" : "none",
           borderBottom: scrolled ? "1px solid rgba(255,255,255,0.07)" : "none",
           transition: "all 0.3s",
         }}>
-          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 18px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
             {/* Logo */}
-            <a href="#" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", flexShrink: 0 }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "9px", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: "11px", fontFamily: "'DM Sans',sans-serif", letterSpacing: "-0.5px", transition: "transform 0.3s", flexShrink: 0 }}
+            <a href="#" style={{ display: "flex", alignItems: "center", gap: "7px", textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: "10px", fontFamily: "'DM Sans',sans-serif", letterSpacing: "-0.5px", transition: "transform 0.3s", flexShrink: 0 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.1) rotate(-8deg)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1) rotate(0)"; }}
               >CM</div>
-              <span className="cm-logo-text" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "17px", fontWeight: 800, color: "#fff", letterSpacing: "-0.4px" }}>
+              <span className="cm-logo-text" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "14px", fontWeight: 800, color: "#fff", letterSpacing: "-0.4px" }}>
                 City<span style={{ color: "#60a5fa" }}>Mate</span>
               </span>
             </a>
@@ -549,21 +713,26 @@ export default function Navbar() {
             <div className="cm-desktop-only" style={{ display: "flex", alignItems: "center", gap: "2px", flex: 1, justifyContent: "center" }}>
               <MegaMenu label="Services" items={serviceItems} />
               <MegaMenu label="Rooms" items={roomItems} />
-              {["Become a Partner","Explore"].map(l => (
-                <button key={l} className="cm-navlink" style={{ color: "rgba(255,255,255,0.72)", background: "transparent", border: "none", cursor: "pointer", padding: "8px 14px", borderRadius: "10px", fontSize: "14px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", transition: "all 0.18s" }}>{l}</button>
-              ))}
+              <button onClick={() => navigate("/become-a-partner")} className="cm-navlink"
+                style={{ color: "rgba(255,255,255,0.72)", background: "transparent", border: "none", cursor: "pointer", padding: "6px 10px", borderRadius: "9px", fontSize: "13px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", transition: "all 0.18s" }}>
+                Become a Partner
+              </button>
+              <button className="cm-navlink"
+                style={{ color: "rgba(255,255,255,0.72)", background: "transparent", border: "none", cursor: "pointer", padding: "6px 10px", borderRadius: "9px", fontSize: "13px", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", transition: "all 0.18s" }}>
+                Explore
+              </button>
             </div>
 
             {/* Desktop auth */}
             <div className="cm-desktop-only" style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
               <Link to="/login">
-                <button style={{ color: "rgba(255,255,255,0.8)", background: "transparent", border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", padding: "8px 20px", borderRadius: "10px", fontSize: "13.5px", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s" }}
+                <button style={{ color: "rgba(255,255,255,0.8)", background: "transparent", border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", padding: "6px 15px", borderRadius: "8px", fontSize: "12.5px", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s" }}
                   onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.1)"; el.style.color = "#fff"; }}
                   onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.color = "rgba(255,255,255,0.8)"; }}
                 >Log In</button>
               </Link>
               <Link to="/signup">
-                <button style={{ background: "#2563eb", color: "#fff", border: "none", cursor: "pointer", padding: "9px 22px", borderRadius: "10px", fontSize: "13.5px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif", transition: "background 0.2s" }}
+                <button style={{ background: "#2563eb", color: "#fff", border: "none", cursor: "pointer", padding: "7px 17px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif", transition: "background 0.2s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1d4ed8"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#2563eb"; }}
                 >Sign Up Free</button>
@@ -573,60 +742,48 @@ export default function Navbar() {
             {/* Mobile: Sign Up pill + Hamburger */}
             <div className="cm-mobile-only" style={{ display: "none", alignItems: "center", gap: "8px" }}>
               <Link to="/signup" style={{ textDecoration: "none" }}>
-                <button style={{
-                  background: "#2563eb", border: "none", color: "#fff",
-                  fontSize: "13px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif",
-                  cursor: "pointer", padding: "0 15px", height: "34px", borderRadius: "9px",
-                  whiteSpace: "nowrap", transition: "background 0.18s",
-                  boxShadow: "0 2px 10px rgba(37,99,235,0.4)",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; }}
+                <button style={{ background: "#2563eb", border: "none", color: "#fff", fontSize: "12px", fontWeight: 700, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", padding: "0 13px", height: "28px", borderRadius: "7px", whiteSpace: "nowrap", transition: "background 0.18s", boxShadow: "0 2px 10px rgba(37,99,235,0.4)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; }}
                 >Sign Up</button>
               </Link>
-              <button
-                onClick={() => setMobileOpen(true)}
-                aria-label="Open menu"
-                style={{
-                  color: "#fff", background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)", borderRadius: "9px",
-                  width: "36px", height: "36px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", flexShrink: 0, transition: "background 0.18s",
-                }}
+              <button onClick={() => setMobileOpen(true)} aria-label="Open menu"
+                style={{ color: "#fff", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.18s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
               >
-                <IconMenu2 size={18} />
+                <IconMenu2 size={17} />
               </button>
             </div>
-
           </div>
         </nav>
 
-        {/* Drawer */}
+        {/* Mobile drawer */}
         {mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} />}
 
-        {/* ════════ HERO ════════ */}
-        <div className="cm-hero-pad" style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, textAlign: "center", padding: "110px 20px 48px" }}>
+        {/* Mobile auth popup */}
+        {showAuthPopup && !isLoggedIn && (
+          <MobileAuthPopup onClose={() => setShowAuthPopup(false)} />
+        )}
 
-          <h1 className="cm-f2 cm-headline" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "clamp(40px, 5.8vw, 72px)", fontWeight: 800, color: "#fff", lineHeight: 1.06, letterSpacing: "-2.5px", marginBottom: "16px", maxWidth: "780px" }}>
+        {/* ════════ HERO ════════ */}
+        <div className="cm-hero-pad" style={{ position: "relative", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, textAlign: "center", padding: "44px 20px 28px", overflow: "visible" }}>
+          <h1 className="cm-f2 cm-headline" style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "clamp(24px, 3.6vw, 44px)", fontWeight: 800, color: "#fff", lineHeight: 1.08, letterSpacing: "-1.5px", marginBottom: "10px", maxWidth: "600px" }}>
             Find{" "}<span className="cm-shimmer">Rooms &amp; Services</span>
             <br /><span style={{ color: "rgba(255,255,255,0.92)" }}>in Your City</span>
           </h1>
-
-          <p className="cm-f3 cm-subline" style={{ color: "rgba(255,255,255,0.45)", fontSize: "17px", fontWeight: 400, lineHeight: 1.75, maxWidth: "400px", marginBottom: "34px" }}>
+          <p className="cm-f3 cm-subline" style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", fontWeight: 400, lineHeight: 1.6, maxWidth: "340px", marginBottom: "18px" }}>
             Your one-stop platform for rooms, local services &amp; everything your city has to offer.
           </p>
 
           {/* Desktop search */}
-          <div className="cm-f4 cm-search-card cm-desktop-only" style={{ width: "100%", maxWidth: "520px" }}>
+          <div className="cm-f4 cm-search-card cm-desktop-only" style={{ width: "100%", maxWidth: "460px", overflow: "visible" }}>
             <CitySearchField value={city} onChange={setCity} />
-            <button className="cm-search-btn"><IconSearch size={15} strokeWidth={2.5} />Search</button>
+            <button className="cm-search-btn"><IconSearch size={14} strokeWidth={2.5} />Search</button>
           </div>
 
           {/* Mobile search */}
-          <div className="cm-f4 cm-mobile-only" style={{ width: "100%", maxWidth: "100%" }}>
+          <div className="cm-f4 cm-mobile-only" style={{ width: "100%", maxWidth: "100%", position: "relative", zIndex: 50 }}>
             <MobileSearchBar />
           </div>
         </div>
