@@ -7,7 +7,8 @@ const errorHandler = require("./middleware/errorHandler");
 const { sendError} = require("./utils/response");
 const HTTP         = require("./constants/httpStatus");
 const MESSAGES     = require("./constants/messages");
-
+const partnerRoutes = require('./modules/partner/partner.routes');
+const adminRoutes = require('./routes/admin.routes');
 const app = express();
 
 // ── Core middleware ───────────────────────
@@ -23,7 +24,17 @@ app.use(express.urlencoded({ extended: true }));
 
 // ── Routes ────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
+
+ // New partner marketplace routes:
+app.use('/api/partners', partnerRoutes);
  
+// Admin routes (protected by authenticate + adminOnly middleware):
+app.use('/admin', adminRoutes);
+
+
+
+
+
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 
