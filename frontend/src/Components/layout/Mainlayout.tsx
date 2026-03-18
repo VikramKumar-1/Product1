@@ -1,23 +1,13 @@
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
-  IconChevronRight, IconStar, IconMapPin, IconBolt,
-  IconHome, IconTools, IconBus, IconToolsKitchen2, IconUsers, IconShieldCheck,
-  IconTrendingUp,
+  IconChevronRight, IconStar, IconMapPin,
+  IconHome, IconTools, IconBus, IconToolsKitchen2
 } from "@tabler/icons-react";
 
 /* ══════════════════════════════════════════
    DATA
 ══════════════════════════════════════════ */
-const SERVICES = [
-  { id: "cleaning",    label: "Cleaning",     emoji: "🧹", color: "#3b82f6" },
-  { id: "plumbing",    label: "Plumbing",     emoji: "🔧", color: "#6366f1" },
-  { id: "electrician", label: "Electrician",  emoji: "⚡", color: "#f59e0b" },
-  { id: "ac",          label: "AC Repair",    emoji: "❄️", color: "#0ea5e9" },
-  { id: "salon",       label: "Salon",        emoji: "💇", color: "#ec4899" },
-  { id: "pest",        label: "Pest Control", emoji: "🛡️", color: "#10b981" },
-  { id: "laundry",     label: "Laundry",      emoji: "👕", color: "#3b82f6" },
-  { id: "carpentry",   label: "Carpentry",    emoji: "🪚", color: "#8b5cf6" },
-];
+
 
 const QUICK_CATS = [
   { id: "rooms",    label: "Rooms & PG",    sub: "Verified Stays",  icon: <IconHome size={22} />,           color: "#2563eb", bg: "#eff6ff" },
@@ -33,12 +23,7 @@ const LISTINGS = [
   { id: 4, tag: "Top Pick", tagBg: "#fffbeb", tagColor: "#d97706", title: "Healthy Home Meals",       city: "Pune",    price: "₹120",    per: "",    rating: "4.7", reviews: 97,  img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80" },
 ];
 
-const TRUST_STATS = [
-  { icon: <IconUsers size={20} />,       value: "2M+",  label: "Happy Users",     color: "#2563eb" },
-  { icon: <IconShieldCheck size={20} />, value: "100%", label: "Verified Partners",color: "#16a34a" },
-  { icon: <IconTrendingUp size={20} />,  value: "15K+", label: "Active Partners",  color: "#7c3aed" },
-  { icon: <IconStar size={20} />,        value: "4.8★", label: "Average Rating",   color: "#d97706" },
-];
+
 
 /* ══════════════════════════════════════════
    GLOBAL STYLES
@@ -204,32 +189,7 @@ export default function MainLayout() {
     <div style={{ background: "var(--surface)", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
       <style>{STYLES}</style>
 
-      {/* ─────────────────────────────────────
-          1. TRENDING SERVICES STRIP
-      ───────────────────────────────────── */}
-      <div style={{ background: "var(--white)", borderBottom: "1px solid var(--border)", padding: "32px 0" }}>
-        <div className="ml-section">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <IconBolt size={18} color="#2563eb" fill="#2563eb" />
-              <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: "var(--text-secondary)" }}>Trending Services</span>
-            </div>
-            <button className="ml-see-all" onClick={() => navigate("/services")}>
-              All Services <IconChevronRight size={15} />
-            </button>
-          </div>
-          <div className="ml-grid-8">
-            {SERVICES.map(s => (
-              <Link key={s.id} to={`/services/${s.id}`} className="ml-svc-card">
-                <div style={{ width: "46px", height: "46px", background: `${s.color}12`, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>
-                  {s.emoji}
-                </div>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)", textAlign: "center", lineHeight: 1.3 }}>{s.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+
 
       {/* ─────────────────────────────────────
           2. EXPLORE CATEGORIES
@@ -252,29 +212,6 @@ export default function MainLayout() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ─────────────────────────────────────
-          3. TRUST STATS BAR
-      ───────────────────────────────────── */}
-      <div style={{ padding: "48px 0 0" }}>
-        <div className="ml-section">
-          <div style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: "var(--radius-xl)", padding: "24px 28px" }}>
-            <div className="ml-grid-4stat">
-              {TRUST_STATS.map((s, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: `${s.color}12`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {s.icon}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "var(--text-primary)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{s.value}</p>
-                    <p style={{ margin: "1px 0 0", fontSize: "11.5px", color: "var(--text-muted)", fontWeight: 500 }}>{s.label}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
