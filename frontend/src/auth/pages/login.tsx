@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useLogin } from "../hooks/Uselogin";
 
 /* ══════════════════════════════════════════
    PASSWORD FIELD
@@ -129,22 +130,31 @@ function EmailField({
 /* ══════════════════════════════════════════
    MAIN LOGIN PAGE
 ══════════════════════════════════════════ */
-export default function Login() {
+export default function LoginPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+
+  // ── hook ──
+  const { login, loading, error: apiError } = useLogin();
+
+  // ── local field state ──
   const [emailVal, setEmailVal] = useState("");
   const [passVal, setPassVal] = useState("");
   const [emailErr, setEmailErr] = useState("");
   const [passErr, setPassErr] = useState("");
-
-  // ── NEW: track failed password attempts ──
   const [failedAttempts, setFailedAttempts] = useState(0);
   const showForgotHint = failedAttempts >= 2;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ── client-side validation ──
     let valid = true;
-    if (!/^\S+@\S+$/.test(emailVal)) { setEmailErr("Please enter a valid email"); valid = false; } else setEmailErr("");
+    if (!/^\S+@\S+$/.test(emailVal)) {
+      setEmailErr("Please enter a valid email");
+      valid = false;
+    } else {
+      setEmailErr("");
+    }
     if (passVal.length < 6) {
       setPassErr("Password must be at least 6 characters");
       valid = false;
@@ -153,25 +163,16 @@ export default function Login() {
     }
     if (!valid) return;
 
-    setLoading(true);
+    // ── call hook → service → API ──
+    await login({ email: emailVal, password: passVal });
 
-    // Simulate auth — treat any submission as a "wrong password" for demo
-    // In real app: replace this with actual API call and check response
-    setTimeout(() => {
-      setLoading(false);
-
-      // ── Simulate wrong password (replace condition with real auth result) ──
-      const isWrongPassword = true; // change to `false` on successful login
-      if (isWrongPassword) {
-        setPassErr("Incorrect password. Please try again.");
-        setFailedAttempts(prev => prev + 1);
-        return;
-      }
-
-      // On success:
+    if (apiError) {
+      setPassErr(apiError);
+      setFailedAttempts(prev => prev + 1);
+    } else {
       setFailedAttempts(0);
       navigate("/");
-    }, 1500);
+    }
   };
 
   const pillars = [
@@ -226,10 +227,6 @@ export default function Login() {
           0%   { background-position:-300% center; }
           100% { background-position:300% center; }
         }
-        @keyframes pulse {
-          0%,100% { box-shadow:0 0 0 0 rgba(34,197,94,0.55); }
-          60%      { box-shadow:0 0 0 6px rgba(34,197,94,0); }
-        }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes mHeaderIn {
           from { opacity:0; transform:translateY(-12px); }
@@ -239,8 +236,6 @@ export default function Login() {
           from { opacity:0; transform:translateY(20px); }
           to   { opacity:1; transform:translateY(0); }
         }
-
-        /* ── NEW: forgot hint slide-in ── */
         @keyframes hintSlideIn {
           from { opacity:0; transform:translateY(-8px) scale(0.98); }
           to   { opacity:1; transform:translateY(0) scale(1); }
@@ -329,58 +324,32 @@ export default function Login() {
           font-family:'DM Sans',sans-serif; margin-bottom:8px;
         }
 
-        /* ── NEW: forgot password hint banner ── */
         .cm-forgot-hint {
           animation: hintSlideIn 0.4s cubic-bezier(.16,1,.3,1) both;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px 16px;
-          border-radius: 14px;
-          background: #fffbeb;
-          border: 1.5px solid #fde68a;
+          display: flex; align-items: center; gap: 12px;
+          padding: 14px 16px; border-radius: 14px;
+          background: #fffbeb; border: 1.5px solid #fde68a;
           margin-top: 16px;
         }
         .cm-forgot-hint-link {
-          color: #d97706;
-          font-weight: 700;
-          font-size: 13px;
-          font-family: 'DM Sans', sans-serif;
-          text-decoration: none;
-          white-space: nowrap;
-          transition: color 0.18s;
+          color: #d97706; font-weight: 700; font-size: 13px;
+          font-family: 'DM Sans', sans-serif; text-decoration: none;
+          white-space: nowrap; transition: color 0.18s;
         }
         .cm-forgot-hint-link:hover { color: #b45309; text-decoration: underline; }
 
-        /* ─── DESKTOP: show left panel, hide mobile header ─── */
-        .lp-left       { display:flex !important; }
-        .lp-m-header   { display:none !important; }
-        .lp-m-back     { display:none !important; }
-        .lp-mlogo      { display:none; }
+        .lp-left     { display:flex !important; }
+        .lp-m-header { display:none !important; }
 
-        /* ─── MOBILE ≤ 900px ─── */
         @media (max-width: 900px) {
           .lp-left { display:none !important; }
           .lp-m-header { display:block !important; animation: mHeaderIn 0.4s ease both; }
-          .lp-m-back { display:flex !important; }
-          .lp-right {
-            padding: 0 !important;
-            align-items: stretch !important;
-            justify-content: flex-start !important;
-          }
-          .lp-form-wrap {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 28px 24px 48px !important;
-            animation: mFormIn 0.45s 0.1s ease both;
-          }
-          .lp-mlogo { display:none !important; }
+          .lp-right { padding: 0 !important; align-items: stretch !important; justify-content: flex-start !important; }
+          .lp-form-wrap { width: 100% !important; max-width: 100% !important; padding: 28px 24px 48px !important; animation: mFormIn 0.45s 0.1s ease both; }
         }
       `}</style>
 
-      {/* ══════════════════════════════
-           LEFT — Brand Panel (desktop only)
-      ══════════════════════════════ */}
+      {/* ── LEFT PANEL ── */}
       <div className="lp-left" style={{
         flex: "0 0 50%", position: "relative", overflow: "hidden",
         flexDirection: "column", justifyContent: "space-between", padding: "48px 56px",
@@ -393,9 +362,7 @@ export default function Login() {
         <div style={{ position:"absolute",inset:0, background:"linear-gradient(158deg,rgba(2,5,22,0.96) 0%,rgba(4,12,44,0.9) 44%,rgba(8,20,64,0.77) 78%,rgba(10,26,72,0.62) 100%)" }} />
         <div style={{ position:"absolute",inset:0, background:"radial-gradient(ellipse 80% 55% at -8% 108%,rgba(37,99,235,0.48) 0%,transparent 52%)" }} />
         <div style={{ position:"absolute",inset:0, background:"radial-gradient(ellipse 55% 45% at 108% -5%,rgba(99,102,241,0.2) 0%,transparent 50%)" }} />
-        <div style={{ position:"absolute",inset:0,pointerEvents:"none",opacity:0.02, backgroundImage:"repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(255,255,255,1) 3px,rgba(255,255,255,1) 4px)" }} />
 
-        {/* Logo */}
         <div style={{ position:"relative",zIndex:4 }}>
           <a href="/" style={{ display:"inline-flex",alignItems:"center",gap:"11px",textDecoration:"none" }}>
             <div style={{ width:"40px",height:"40px",borderRadius:"12px",background:"linear-gradient(145deg,#2563eb,#1e3a8a)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:"14px" }}>CM</div>
@@ -405,13 +372,12 @@ export default function Login() {
           </a>
         </div>
 
-        {/* Center content */}
         <div style={{ position:"relative",zIndex:4 }}>
           <h2 style={{ fontFamily:"'DM Sans',sans-serif",fontWeight:800,fontSize:"clamp(30px,3.2vw,46px)",color:"#fff",lineHeight:1.08,letterSpacing:"-2px",margin:"0 0 20px 0" }}>
             Stop scrolling.<br />Start <span className="cm-shimmer">living better.</span>
           </h2>
-          <p style={{ color:"rgba(255,255,255,0.52)",fontSize:"16px",fontWeight:400,lineHeight:1.78,maxWidth:"360px",margin:"0 0 38px 0",letterSpacing:"0.01em" }}>
-            CityMate puts your entire city at your fingertips — find verified rooms, book trusted services, and discover local businesses.{" "}
+          <p style={{ color:"rgba(255,255,255,0.52)",fontSize:"16px",lineHeight:1.78,maxWidth:"360px",margin:"0 0 38px 0" }}>
+            CityMate puts your entire city at your fingertips.{" "}
             <strong style={{ color:"rgba(255,255,255,0.78)",fontWeight:600 }}>No middlemen. No hassle. Just results.</strong>
           </p>
           <div style={{ display:"flex",flexDirection:"column",gap:"10px" }}>
@@ -419,7 +385,7 @@ export default function Login() {
               <div key={i} className="cm-pillar">
                 <div style={{ width:"42px",height:"42px",borderRadius:"12px",flexShrink:0,background:p.glow,color:p.color,display:"flex",alignItems:"center",justifyContent:"center" }}>{p.icon}</div>
                 <div>
-                  <div style={{ color:"#fff",fontSize:"14px",fontWeight:700,marginBottom:"3px",letterSpacing:"-0.1px" }}>{p.title}</div>
+                  <div style={{ color:"#fff",fontSize:"14px",fontWeight:700,marginBottom:"3px" }}>{p.title}</div>
                   <div style={{ color:"rgba(255,255,255,0.4)",fontSize:"12.5px",lineHeight:1.58 }}>{p.body}</div>
                 </div>
               </div>
@@ -428,74 +394,40 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ══════════════════════════════
-           RIGHT — Login Form
-      ══════════════════════════════ */}
+      {/* ── RIGHT — FORM ── */}
       <div className="lp-right" style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        background: "#ffffff", overflowY: "auto", position: "relative",
-        flexDirection: "column",
+        background: "#ffffff", overflowY: "auto", position: "relative", flexDirection: "column",
       }}>
 
-        {/* ── MOBILE HEADER ── */}
-        <div className="lp-m-header" style={{
-          width: "100%", position: "relative", overflow: "hidden",
-          flexShrink: 0, height: "200px",
-        }}>
-          <div style={{
-            position: "absolute", inset: "-6%",
-            backgroundImage: "url(https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=85)",
-            backgroundSize: "cover", backgroundPosition: "center 40%",
-          }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(3,6,18,0.78) 0%, rgba(3,6,18,0.55) 55%, rgba(3,6,18,0.88) 100%)" }} />
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              position: "absolute", top: "18px", left: "18px", zIndex: 10,
-              display: "flex", alignItems: "center", gap: "6px",
-              background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)",
-              borderRadius: "10px", padding: "8px 14px",
-              color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 600,
-              fontFamily: "'DM Sans',sans-serif", cursor: "pointer", backdropFilter: "blur(12px)", transition: "all 0.2s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; e.currentTarget.style.color = "#fff"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.85)"; }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
-            </svg>
+        {/* Mobile header */}
+        <div className="lp-m-header" style={{ width:"100%",position:"relative",overflow:"hidden",flexShrink:0,height:"200px" }}>
+          <div style={{ position:"absolute",inset:"-6%",backgroundImage:"url(https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=85)",backgroundSize:"cover",backgroundPosition:"center 40%" }} />
+          <div style={{ position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(3,6,18,0.78) 0%,rgba(3,6,18,0.55) 55%,rgba(3,6,18,0.88) 100%)" }} />
+          <button onClick={() => navigate(-1)} style={{ position:"absolute",top:"18px",left:"18px",zIndex:10,display:"flex",alignItems:"center",gap:"6px",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:"10px",padding:"8px 14px",color:"rgba(255,255,255,0.85)",fontSize:"13px",fontWeight:600,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",backdropFilter:"blur(12px)" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             Back
           </button>
-          <div style={{
-            position: "absolute", inset: 0, zIndex: 5,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "38px", height: "38px", borderRadius: "11px", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: "13px", fontFamily: "'DM Sans',sans-serif" }}>CM</div>
-              <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "22px", fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>
-                City<span style={{ color: "#60a5fa" }}>Mate</span>
-              </span>
+          <div style={{ position:"absolute",inset:0,zIndex:5,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"10px" }}>
+            <div style={{ display:"flex",alignItems:"center",gap:"10px" }}>
+              <div style={{ width:"38px",height:"38px",borderRadius:"11px",background:"#2563eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:"13px" }}>CM</div>
+              <span style={{ fontSize:"22px",fontWeight:800,color:"#fff",letterSpacing:"-0.5px" }}>City<span style={{ color:"#60a5fa" }}>Mate</span></span>
             </div>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", fontFamily: "'DM Sans',sans-serif", fontWeight: 400, margin: 0, letterSpacing: "0.01em" }}>
-              Rooms &amp; Services across your city
-            </p>
           </div>
         </div>
 
-        {/* ── FORM AREA ── */}
-        <div className="lp-form-wrap" style={{ width: "100%", maxWidth: "390px", position: "relative", zIndex: 2, padding: "40px 24px" }}>
+        {/* Form */}
+        <div className="lp-form-wrap" style={{ width:"100%",maxWidth:"390px",position:"relative",zIndex:2,padding:"40px 24px" }}>
 
-          {/* Heading */}
-          <div className="f1" style={{ marginBottom: "6px" }}>
+          <div className="f1" style={{ marginBottom:"6px" }}>
             <h1 style={{ fontFamily:"'DM Sans',sans-serif",fontWeight:800,fontSize:"28px",color:"#0d1526",letterSpacing:"-1.1px",lineHeight:1.12,margin:0 }}>
               Welcome back
             </h1>
           </div>
-          <p className="f2" style={{ color:"#7c8fa6",fontSize:"14.5px",fontWeight:400,lineHeight:1.65,margin:"0 0 32px 0" }}>
+          <p className="f2" style={{ color:"#7c8fa6",fontSize:"14.5px",lineHeight:1.65,margin:"0 0 32px 0" }}>
             Sign in to continue with CityMate.
           </p>
 
-          {/* Google */}
           <div className="f3" style={{ marginBottom:"20px" }}>
             <button className="cm-google">
               <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink:0 }}>
@@ -508,10 +440,8 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Divider */}
           <div className="f3 cm-or" style={{ marginBottom:"22px" }}>or continue with email</div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit}>
             <div className="f4" style={{ marginBottom:"16px" }}>
               <label className="cm-label">Email address</label>
@@ -521,9 +451,7 @@ export default function Login() {
             <div className="f5">
               <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px" }}>
                 <label className="cm-label" style={{ marginBottom:0 }}>Password</label>
-                <Link
-                  to="/forgot-password"
-                  style={{ fontSize:"12.5px",color:"#2563eb",fontWeight:600,textDecoration:"none",transition:"color 0.2s" }}
+                <Link to="/forgot-password" style={{ fontSize:"12.5px",color:"#2563eb",fontWeight:600,textDecoration:"none" }}
                   onMouseEnter={e=>(e.currentTarget.style.color="#1d4ed8")}
                   onMouseLeave={e=>(e.currentTarget.style.color="#2563eb")}
                 >Forgot password?</Link>
@@ -552,36 +480,22 @@ export default function Login() {
               </button>
             </div>
 
-            {/* ══════════════════════════════
-                 FORGOT PASSWORD HINT BANNER
-                 Appears after 2+ failed attempts
-            ══════════════════════════════ */}
             {showForgotHint && (
               <div className="cm-forgot-hint">
-                {/* Warning icon */}
-                <div style={{
-                  width: "36px", height: "36px", borderRadius: "10px",
-                  background: "#fef3c7", flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
+                <div style={{ width:"36px",height:"36px",borderRadius:"10px",background:"#fef3c7",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     <line x1="12" y1="9" x2="12" y2="13"/>
                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                   </svg>
                 </div>
-                {/* Text + link */}
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: "0 0 3px 0", fontSize: "12.5px", fontWeight: 700, color: "#92400e", fontFamily: "'DM Sans', sans-serif" }}>
+                <div style={{ flex:1 }}>
+                  <p style={{ margin:"0 0 3px 0",fontSize:"12.5px",fontWeight:700,color:"#92400e",fontFamily:"'DM Sans',sans-serif" }}>
                     Having trouble signing in?
                   </p>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#a16207", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>
-                    {failedAttempts >= 3
-                      ? "Too many failed attempts. "
-                      : "Incorrect password. "}
-                    <Link to="/forgot-password" className="cm-forgot-hint-link">
-                      Reset your password →
-                    </Link>
+                  <p style={{ margin:0,fontSize:"12px",color:"#a16207",fontFamily:"'DM Sans',sans-serif",lineHeight:1.5 }}>
+                    {failedAttempts >= 3 ? "Too many failed attempts. " : "Incorrect password. "}
+                    <Link to="/forgot-password" className="cm-forgot-hint-link">Reset your password →</Link>
                   </p>
                 </div>
               </div>
@@ -598,7 +512,7 @@ export default function Login() {
 
           <p style={{ textAlign:"center",marginTop:"16px",fontSize:"11.5px",color:"#b8c4d0",lineHeight:1.7 }}>
             By continuing, you agree to our{" "}
-            <a href="#" style={{ color:"#94a3b8",textDecoration:"underline" }}>Terms</a>{" "}&amp;{" "}
+            <a href="#" style={{ color:"#94a3b8",textDecoration:"underline" }}>Terms</a> &amp;{" "}
             <a href="#" style={{ color:"#94a3b8",textDecoration:"underline" }}>Privacy Policy</a>.
           </p>
         </div>

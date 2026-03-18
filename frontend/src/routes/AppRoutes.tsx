@@ -1,10 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Navbar from "../Components/layout/Navbar";
-import Login from "../auth/login";
-import Signup from "../auth/signup";
-import PasswordSetup from "../auth/passwordsetup";
-import MainLayout from "../Components/layout/Mainlayout"; 
+import Login from "../auth/pages/login";
+import Signup from "../auth/pages/signup";
+import PasswordSetup from "../auth/pages/passwordsetup";
+ 
 import Partner from "../form/Partner";
+import MainLayout from "../Components/layout/Mainlayout";
 
 const AppRoutes = () => {
   return (
@@ -20,7 +21,7 @@ const AppRoutes = () => {
         <Route path="/" element={
           <>
             <Navbar />
-            <MainLayout /> {/* ← use it here */}
+            <MainLayout/>
           </>
         } />
       </Routes>
