@@ -3,30 +3,44 @@
 ══════════════════════════════════════════════════════════ */
 
 export interface PartnerFormData {
+  // Personal
   fullName: string;
   email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  serviceType: string;
+  profilePhoto: File | null;
+
+  // Address
   address: string;
   city: string;
+  state: string;          // ← string, method nahi
   pincode: string;
+
+  // KYC
+  aadhaarNumber: string;  // ← string, method nahi
   aadhaarFront: File | null;
   aadhaarBack: File | null;
-  profilePhoto: File | null;
+  panNumber: string;      // ← string, any nahi
+
+  // Payment
+  paymentMethod: "upi" | "bank" | "";
+  upiId: string;
+  accountHolderName: string;
+  bankName: string;
+  bankBranch: string;
+  accountNumber: string;
+  ifscCode: string;
 }
 
 export interface PartnerFormErrors {
-  fullName?: string;
-  email?: string;
-  otp?: string;
-  address?: string;
-  city?: string;
-  pincode?: string;
-  aadhaarFront?: string;
-  aadhaarBack?: string;
+  [key: string]: string | undefined;
 }
 
 export type ProfilePhotoSource = "manual" | "aadhaar" | null;
 
-export type PartnerStep = 1 | 2 | 3;
+export type PartnerStep = 1 | 2 | 3 | 4 | 5;
 
 export interface StepInfo {
   title: string;

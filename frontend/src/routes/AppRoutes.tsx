@@ -4,16 +4,16 @@ import Navbar from "../Components/layout/Navbar";
 import Login from "../auth/pages/login";
 import Signup from "../auth/pages/signup";
 import PasswordSetup from "../auth/pages/passwordsetup";
-import Partner from "../form/Partner";
+import Partner from "../form/pages/Partner";
 import MainLayout from "../Components/layout/Mainlayout";
 import SplashScreen from "../Components/layout/SplashScreen";
+import Footer from "../Components/layout/Footer"
 
 const AppRoutes = () => {
   const [splashDone, setSplashDone] = useState(() => {
     return sessionStorage.getItem("splashShown") === "true";
   });
 
-  // Splash screen — sirf pehli baar dikhega (tab refresh pe dobara nahi)
   if (!splashDone) {
     return (
       <SplashScreen
@@ -39,6 +39,8 @@ const AppRoutes = () => {
           <>
             <Navbar />
             <MainLayout />
+            <Footer/>
+            
           </>
         } />
       </Routes>
