@@ -224,61 +224,45 @@ const CITYMATE_SERVICES = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   HERO CAROUSEL DATA
+   HERO SLIDES DATA
 ═══════════════════════════════════════════════════════ */
 const HERO_SLIDES = [
-  {
-    img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=85",
-    tag: "🏠 Home Services",
-    title: "Professional Home Cleaning",
-    sub: "Trusted cleaners at your doorstep",
-    bg: "rgba(21,101,192,0.55)",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=85",
-    tag: "🛏️ Rooms & PG",
-    title: "Verified PGs & Luxury Flats",
-    sub: "Comfort living in your city",
-    bg: "rgba(69,39,160,0.55)",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1400&q=85",
-    tag: "❄️ AC Repair",
-    title: "AC Service & Repair",
-    sub: "Same-day installation & servicing",
-    bg: "rgba(1,87,155,0.55)",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=1400&q=85",
-    tag: "📷 CCTV & Security",
-    title: "CCTV Installation & Monitoring",
-    sub: "Keep your home & office safe 24/7",
-    bg: "rgba(27,94,32,0.55)",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1400&q=85",
-    tag: "💇 Salon & Beauty",
-    title: "Salon Services at Home",
-    sub: "Expert beauticians at your door",
-    bg: "rgba(136,14,79,0.55)",
-  },
+  { img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=85", tag: "🏠 Home Services",   title: "Professional Home Cleaning",      sub: "Trusted cleaners at your doorstep",    bg: "rgba(21,101,192,0.55)"  },
+  { img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=85", tag: "🛏️ Rooms & PG",     title: "Verified PGs & Luxury Flats",     sub: "Comfort living in your city",           bg: "rgba(69,39,160,0.55)"   },
+  { img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1400&q=85", tag: "❄️ AC Repair",   title: "AC Service & Repair",              sub: "Same-day installation & servicing",     bg: "rgba(1,87,155,0.55)"    },
+  { img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=1400&q=85", tag: "📷 CCTV & Security", title: "CCTV Installation & Monitoring", sub: "Keep your home & office safe 24/7",    bg: "rgba(27,94,32,0.55)"    },
+  { img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1400&q=85", tag: "💇 Salon & Beauty",   title: "Salon Services at Home",          sub: "Expert beauticians at your door",       bg: "rgba(136,14,79,0.55)"   },
 ];
 
 /* ═══════════════════════════════════════════════════════
-   HERO CAROUSEL
+   HERO CAROUSEL — true infinite loop via clone technique
+   Track layout: [clone-of-last, ...originals, clone-of-first]
+   trackIndex 1..N = real slides; 0 = last-clone; N+1 = first-clone
 ═══════════════════════════════════════════════════════ */
 function HeroCarousel() {
-  const [current, setCurrent] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startX = useRef(0);
+  const total      = HERO_SLIDES.length;
+  const [trackIndex, setTrackIndex] = useState(1);   // start at real slide 1
+  const [animated,   setAnimated]   = useState(true);
+  const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startX     = useRef(0);
   const isDragging = useRef(false);
-  const total = HERO_SLIDES.length;
 
-  const goTo = (idx: number) => setCurrent((idx + total) % total);
+  // Cloned track: [last, s0, s1, s2, s3, s4, first]
+  const cloned = [HERO_SLIDES[total - 1], ...HERO_SLIDES, HERO_SLIDES[0]];
+
+  // Dot index (0-based), handles clone positions gracefully
+  const dotIndex = trackIndex <= 0 ? total - 1
+                 : trackIndex > total ? 0
+                 : trackIndex - 1;
+
+  const next = () => { setAnimated(true); setTrackIndex(p => p + 1); };
+  const prev = () => { setAnimated(true); setTrackIndex(p => p - 1); };
+
+  const goTo = (realIdx: number) => { setAnimated(true); setTrackIndex(realIdx + 1); };
 
   const resetTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setCurrent(p => (p + 1) % total), 3200);
+    timerRef.current = setInterval(next, 3200);
   };
 
   useEffect(() => {
@@ -286,11 +270,25 @@ function HeroCarousel() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
+  // After CSS transition ends: silently snap from clone to real counterpart
+  const onTransitionEnd = () => {
+    if (trackIndex === total + 1) {
+      // Landed on first-clone → jump to real first (index 1) without animation
+      setAnimated(false);
+      setTrackIndex(1);
+    } else if (trackIndex === 0) {
+      // Landed on last-clone → jump to real last without animation
+      setAnimated(false);
+      setTrackIndex(total);
+    }
+  };
+
+  // Touch / drag handlers
   const onTouchStart = (e: React.TouchEvent) => { startX.current = e.touches[0].clientX; };
   const onTouchEnd   = (e: React.TouchEvent) => {
     const diff = startX.current - e.changedTouches[0].clientX;
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    if (Math.abs(diff) > 40) { diff > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
+    if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetTimer(); }
   };
   const onMouseDown  = (e: React.MouseEvent) => { isDragging.current = true; startX.current = e.clientX; };
   const onMouseUp    = (e: React.MouseEvent) => {
@@ -298,29 +296,32 @@ function HeroCarousel() {
     isDragging.current = false;
     const diff = startX.current - e.clientX;
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    if (Math.abs(diff) > 40) { diff > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
+    if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetTimer(); }
   };
 
   return (
-    <div style={{ background: "#fff", padding: "10px 16px 10px", borderBottom: "1.5px solid #DBEAFE" }}>
+    <div style={{ background: "#fff", padding: "10px 16px", borderBottom: "1.5px solid #DBEAFE" }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+
+        {/* Viewport */}
         <div
           style={{ overflow: "hidden", borderRadius: "14px", cursor: "grab", userSelect: "none" }}
           onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
           onMouseDown={onMouseDown}   onMouseUp={onMouseUp}
           onMouseLeave={() => { isDragging.current = false; }}>
-          <div style={{
-            display: "flex",
-            transition: "transform 0.45s cubic-bezier(.16,1,.3,1)",
-            transform: `translateX(-${current * 100}%)`,
-            willChange: "transform",
-          }}>
-            {HERO_SLIDES.map((slide, i) => (
-              <div key={i} style={{
-                flex: "0 0 100%", minWidth: "100%",
-                height: "300px", position: "relative",
-                overflow: "hidden", borderRadius: "14px",
-              }}>
+
+          {/* Track */}
+          <div
+            style={{
+              display: "flex",
+              transform: `translateX(-${trackIndex * 100}%)`,
+              transition: animated ? "transform 0.45s cubic-bezier(.16,1,.3,1)" : "none",
+              willChange: "transform",
+            }}
+            onTransitionEnd={onTransitionEnd}>
+
+            {cloned.map((slide, i) => (
+              <div key={i} style={{ flex: "0 0 100%", minWidth: "100%", height: "300px", position: "relative", overflow: "hidden", borderRadius: "14px" }}>
                 <img src={slide.img} alt={slide.title} draggable={false}
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
                 <div style={{ position: "absolute", inset: 0, background: `linear-gradient(100deg, ${slide.bg} 0%, rgba(0,0,0,0.15) 70%, transparent 100%)` }} />
@@ -335,17 +336,22 @@ function HeroCarousel() {
                     {slide.sub}
                   </div>
                 </div>
-                <div style={{ position: "absolute", top: "10px", right: "12px", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(6px)", borderRadius: "20px", padding: "2px 9px", fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
-                  {i + 1} / {total}
-                </div>
+                {/* Slide counter only on real slides (not clones) */}
+                {i >= 1 && i <= total && (
+                  <div style={{ position: "absolute", top: "10px", right: "12px", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(6px)", borderRadius: "20px", padding: "2px 9px", fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
+                    {i} / {total}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
+
+        {/* Dots */}
         <div style={{ display: "flex", justifyContent: "center", gap: "5px", marginTop: "8px" }}>
           {HERO_SLIDES.map((_, i) => (
             <div key={i} onClick={() => { goTo(i); resetTimer(); }}
-              style={{ width: i === current ? "18px" : "5px", height: "5px", borderRadius: "3px", background: i === current ? "#2563EB" : "#BFDBFE", cursor: "pointer", transition: "all 0.3s cubic-bezier(.16,1,.3,1)" }} />
+              style={{ width: i === dotIndex ? "18px" : "5px", height: "5px", borderRadius: "3px", background: i === dotIndex ? "#2563EB" : "#BFDBFE", cursor: "pointer", transition: "all 0.3s cubic-bezier(.16,1,.3,1)" }} />
           ))}
         </div>
       </div>
@@ -357,9 +363,8 @@ function HeroCarousel() {
    LOCATION BUTTON
 ═══════════════════════════════════════════════════════ */
 function LocationButton({ locVal, setLocVal }: { locVal: string; setLocVal: (v: string) => void }) {
-  const [loading, setLoading] = useState(false);
+  const [loading,  setLoading]  = useState(false);
   const [inputVal, setInputVal] = useState(locVal);
-
   useEffect(() => { setInputVal(locVal); }, [locVal]);
 
   const handleCommit = () => {
@@ -371,193 +376,58 @@ function LocationButton({ locVal, setLocVal }: { locVal: string; setLocVal: (v: 
 
   return (
     <div className="cm-loc-box" style={{ display: "flex", alignItems: "center", gap: "6px", padding: "0 12px", borderRight: "1.5px solid #BFDBFE", width: "200px", flexShrink: 0, background: "transparent" }}>
-      {loading ? (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ animation: "cm-spin 0.8s linear infinite", flexShrink: 0 }}>
-          <circle cx="12" cy="12" r="9" stroke="#2563EB" strokeWidth="2.5" strokeDasharray="40 20" strokeLinecap="round"/>
-        </svg>
-      ) : (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="#2563EB" style={{ flexShrink: 0 }}>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/>
-        </svg>
-      )}
+      {loading
+        ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ animation: "cm-spin 0.8s linear infinite", flexShrink: 0 }}><circle cx="12" cy="12" r="9" stroke="#2563EB" strokeWidth="2.5" strokeDasharray="40 20" strokeLinecap="round"/></svg>
+        : <svg width="15" height="15" viewBox="0 0 24 24" fill="#2563EB" style={{ flexShrink: 0 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+      }
       <input className="cm-input cm-loc-input" value={inputVal}
-        onChange={e => setInputVal(e.target.value)}
-        onBlur={handleCommit}
+        onChange={e => setInputVal(e.target.value)} onBlur={handleCommit}
         onKeyDown={e => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleCommit(); } }}
-        placeholder="Enter location"
-        style={{ fontSize: "13px", color: "#111827" }} />
+        placeholder="Enter location" style={{ fontSize: "13px", color: "#111827" }} />
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════
-   MOBILE MENU — word-by-word animation + hover/active
+   MOBILE MENU
 ═══════════════════════════════════════════════════════ */
-
 const MOBILE_MENU_STYLES = `
-  @keyframes mm-backdrop {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  @keyframes mm-slide-in {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-  }
-  @keyframes mm-word {
-    from { opacity: 0; transform: translateY(6px) scale(0.96); filter: blur(2px); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0);   }
-  }
+  @keyframes mm-backdrop { from{opacity:0} to{opacity:1} }
+  @keyframes mm-slide-in { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes mm-word { from{opacity:0;transform:translateY(6px) scale(0.96);filter:blur(2px)} to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
 
-  .mm-backdrop {
-    position: fixed; inset: 0; z-index: 9998;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(6px);
-    animation: mm-backdrop 0.25s ease both;
-  }
+  .mm-backdrop { position:fixed;inset:0;z-index:9998;background:rgba(15,23,42,0.5);backdrop-filter:blur(6px);animation:mm-backdrop 0.25s ease both; }
+  .mm-drawer   { position:fixed;top:0;right:0;bottom:0;width:78%;max-width:300px;z-index:9999;background:#fff;padding:28px 20px;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,0.18);animation:mm-slide-in 0.32s cubic-bezier(0.16,1,0.3,1) both;overflow-y:auto; }
 
-  .mm-drawer {
-    position: fixed; top: 0; right: 0; bottom: 0;
-    width: 78%; max-width: 300px;
-    z-index: 9999;
-    background: #fff;
-    padding: 28px 20px;
-    display: flex; flex-direction: column;
-    box-shadow: -8px 0 40px rgba(0,0,0,0.18);
-    animation: mm-slide-in 0.32s cubic-bezier(0.16,1,0.3,1) both;
-    overflow-y: auto;
-  }
+  .mm-nav-item { display:flex;align-items:center;gap:12px;cursor:pointer;padding:13px 12px;border-radius:11px;margin-bottom:4px;transition:background 0.18s;-webkit-tap-highlight-color:transparent;user-select:none; }
+  .mm-nav-item:hover  { background:#EFF6FF; }
+  .mm-nav-item:active { background:#DBEAFE; }
 
-  .mm-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    padding: 13px 12px;
-    border-radius: 11px;
-    margin-bottom: 4px;
-    transition: background 0.18s;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    position: relative;
-  }
-  .mm-nav-item:hover  { background: #EFF6FF; }
-  .mm-nav-item:active { background: #DBEAFE; }
+  .mm-nav-icon { width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.18s; }
+  .mm-nav-item:hover .mm-nav-icon { transform:scale(1.1); }
 
-  .mm-nav-icon {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.18s;
-  }
-  .mm-nav-item:hover .mm-nav-icon { transform: scale(1.1); }
+  .mm-nav-label { font-size:15.5px;font-weight:700;color:#111827;font-family:'DM Sans',sans-serif;display:flex;flex-wrap:wrap;gap:5px;line-height:1; }
+  .mm-word      { display:inline-block;opacity:0;animation:mm-word 0.38s cubic-bezier(0.16,1,0.3,1) both; }
+  .mm-nav-sub   { font-size:11px;color:#94A3B8;font-weight:500;margin-top:2px;font-family:'DM Sans',sans-serif;opacity:0;animation:mm-word 0.38s cubic-bezier(0.16,1,0.3,1) both; }
 
-  .mm-nav-label {
-    font-size: 15.5px; font-weight: 700;
-    color: #111827;
-    font-family: 'DM Sans', sans-serif;
-    display: flex; flex-wrap: wrap; gap: 5px;
-    line-height: 1;
-  }
+  .mm-arrow { margin-left:auto;color:#CBD5E1;transition:transform 0.18s,color 0.18s;flex-shrink:0; }
+  .mm-nav-item:hover .mm-arrow { transform:translateX(3px);color:#2563EB; }
 
-  .mm-word {
-    display: inline-block;
-    opacity: 0;
-    animation: mm-word 0.38s cubic-bezier(0.16,1,0.3,1) both;
-  }
-
-  .mm-nav-sub {
-    font-size: 11px;
-    color: #94A3B8;
-    font-weight: 500;
-    margin-top: 2px;
-    font-family: 'DM Sans', sans-serif;
-    opacity: 0;
-    animation: mm-word 0.38s cubic-bezier(0.16,1,0.3,1) both;
-  }
-
-  .mm-arrow {
-    margin-left: auto;
-    color: #CBD5E1;
-    transition: transform 0.18s, color 0.18s;
-    flex-shrink: 0;
-  }
-  .mm-nav-item:hover .mm-arrow {
-    transform: translateX(3px);
-    color: #2563EB;
-  }
-
-  .mm-divider {
-    height: 1px;
-    background: #F1F5F9;
-    margin: 8px 0;
-  }
-
-  .mm-section-label {
-    font-size: 10px;
-    font-weight: 800;
-    color: #94A3B8;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0 12px;
-    margin-bottom: 6px;
-    font-family: 'DM Sans', sans-serif;
-    opacity: 0;
-    animation: mm-word 0.35s ease both;
-  }
+  .mm-divider      { height:1px;background:#F1F5F9;margin:8px 0; }
+  .mm-section-label{ font-size:10px;font-weight:800;color:#94A3B8;letter-spacing:0.1em;text-transform:uppercase;padding:0 12px;margin-bottom:6px;font-family:'DM Sans',sans-serif;opacity:0;animation:mm-word 0.35s ease both; }
 `;
 
 const NAV_ITEMS = [
-  {
-    label: "Services",
-    sub: "Home cleaning, plumbing & more",
-    path: "/services",
-    iconBg: "#EFF6FF",
-    iconColor: "#2563EB",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-      </svg>
-    ),
-  },
-  {
-    label: "Rooms & PG",
-    sub: "Verified PGs, flats & hostels",
-    path: "/rooms",
-    iconBg: "#F0FDF4",
-    iconColor: "#16A34A",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-    ),
-  },
-  {
-    label: "Become a Partner",
-    sub: "Grow your business with us",
-    path: "/become-a-partner",
-    iconBg: "#FFFBEB",
-    iconColor: "#D97706",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-  },
+  { label:"Services",          sub:"Home cleaning, plumbing & more", path:"/services",          iconBg:"#EFF6FF", icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> },
+  { label:"Rooms & PG",        sub:"Verified PGs, flats & hostels",  path:"/rooms",             iconBg:"#F0FDF4", icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+  { label:"Become a Partner",  sub:"Grow your business with us",     path:"/become-a-partner",  iconBg:"#FFFBEB", icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
 ];
 
-/* Word-by-word animated label */
 function AnimatedLabel({ text, baseDelay = 0 }: { text: string; baseDelay?: number }) {
   return (
     <span className="mm-nav-label">
       {text.split(" ").map((word, i) => (
-        <span key={i} className="mm-word" style={{ animationDelay: `${baseDelay + i * 0.07}s` }}>
-          {word}
-        </span>
+        <span key={i} className="mm-word" style={{ animationDelay: `${baseDelay + i * 0.07}s` }}>{word}</span>
       ))}
     </span>
   );
@@ -565,26 +435,18 @@ function AnimatedLabel({ text, baseDelay = 0 }: { text: string; baseDelay?: numb
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
-
-  const handleNav = (path: string) => {
-    navigate(path);
-    onClose();
-  };
+  const handleNav = (path: string) => { navigate(path); onClose(); };
 
   return (
     <>
       <style>{MOBILE_MENU_STYLES}</style>
-
-      {/* Backdrop */}
       <div className="mm-backdrop" onClick={onClose} />
-
-      {/* Drawer */}
       <div className="mm-drawer">
 
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "34px", height: "34px", background: "linear-gradient(135deg,#2563EB,#1D4ED8)", borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(37,99,235,0.3)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+            <div style={{ width:"34px", height:"34px", background:"linear-gradient(135deg,#2563EB,#1D4ED8)", borderRadius:"9px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 3px 10px rgba(37,99,235,0.3)" }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <rect x="2"  y="2"  width="9" height="9" rx="2" fill="#fff" opacity="0.95"/>
                 <rect x="13" y="2"  width="9" height="9" rx="2" fill="#fff" opacity="0.6"/>
@@ -592,66 +454,43 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                 <rect x="13" y="13" width="9" height="9" rx="2" fill="#fff" opacity="0.95"/>
               </svg>
             </div>
-            <span style={{ fontWeight: 900, fontSize: "19px", fontFamily: "'Nunito',sans-serif" }}>
-              <span style={{ color: "#111827" }}>City</span>
-              <span style={{ color: "#2563EB" }}>Mate</span>
+            <span style={{ fontWeight:900, fontSize:"19px", fontFamily:"'Nunito',sans-serif" }}>
+              <span style={{ color:"#111827" }}>City</span><span style={{ color:"#2563EB" }}>Mate</span>
             </span>
           </div>
           <button onClick={onClose}
-            style={{ background: "#EFF6FF", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", flexShrink: 0, transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#DBEAFE")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#EFF6FF")}>
-            ✕
-          </button>
+            style={{ background:"#EFF6FF", border:"none", borderRadius:"50%", width:"36px", height:"36px", cursor:"pointer", color:"#2563EB", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"16px", flexShrink:0, transition:"background 0.15s" }}
+            onMouseEnter={e => (e.currentTarget.style.background="#DBEAFE")}
+            onMouseLeave={e => (e.currentTarget.style.background="#EFF6FF")}>✕</button>
         </div>
 
-        {/* Section label */}
-        <div className="mm-section-label" style={{ animationDelay: "0.05s" }}>Navigation</div>
+        <div className="mm-section-label" style={{ animationDelay:"0.05s" }}>Navigation</div>
 
-        {/* Nav Items */}
         {NAV_ITEMS.map((item, idx) => (
           <div key={item.label} className="mm-nav-item" onClick={() => handleNav(item.path)}>
-            <div className="mm-nav-icon" style={{ background: item.iconBg }}>
-              {item.icon}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
+            <div className="mm-nav-icon" style={{ background:item.iconBg }}>{item.icon}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:"2px", flex:1, minWidth:0 }}>
               <AnimatedLabel text={item.label} baseDelay={0.1 + idx * 0.06} />
-              <span
-                className="mm-nav-sub"
-                style={{ animationDelay: `${0.18 + idx * 0.06}s` }}>
-                {item.sub}
-              </span>
+              <span className="mm-nav-sub" style={{ animationDelay:`${0.18 + idx * 0.06}s` }}>{item.sub}</span>
             </div>
             <span className="mm-arrow">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
             </span>
           </div>
         ))}
 
         <div className="mm-divider" />
 
-        {/* CTA Buttons */}
-        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "10px", paddingTop: "12px" }}>
+        <div style={{ marginTop:"auto", display:"flex", flexDirection:"column", gap:"10px", paddingTop:"12px" }}>
           <button onClick={() => handleNav("/login")}
-            style={{ width: "100%", background: "#fff", color: "#2563EB", border: "2px solid #2563EB", padding: "12px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "background 0.15s, border-color 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#EFF6FF")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
-            onMouseDown={e => (e.currentTarget.style.background = "#DBEAFE")}
-            onMouseUp={e => (e.currentTarget.style.background = "#EFF6FF")}>
-            Login
-          </button>
+            style={{ width:"100%", background:"#fff", color:"#2563EB", border:"2px solid #2563EB", padding:"12px", borderRadius:"10px", fontWeight:700, fontSize:"14px", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s" }}
+            onMouseEnter={e=>(e.currentTarget.style.background="#EFF6FF")} onMouseLeave={e=>(e.currentTarget.style.background="#fff")}
+            onMouseDown={e=>(e.currentTarget.style.background="#DBEAFE")} onMouseUp={e=>(e.currentTarget.style.background="#EFF6FF")}>Login</button>
           <button onClick={() => handleNav("/signup")}
-            style={{ width: "100%", background: "#2563EB", color: "#fff", border: "none", padding: "12px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "background 0.15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#1D4ED8")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#2563EB")}
-            onMouseDown={e => (e.currentTarget.style.background = "#1E40AF")}
-            onMouseUp={e => (e.currentTarget.style.background = "#1D4ED8")}>
-            Register Free
-          </button>
+            style={{ width:"100%", background:"#2563EB", color:"#fff", border:"none", padding:"12px", borderRadius:"10px", fontWeight:700, fontSize:"14px", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s" }}
+            onMouseEnter={e=>(e.currentTarget.style.background="#1D4ED8")} onMouseLeave={e=>(e.currentTarget.style.background="#2563EB")}
+            onMouseDown={e=>(e.currentTarget.style.background="#1E40AF")} onMouseUp={e=>(e.currentTarget.style.background="#1D4ED8")}>Register Free</button>
         </div>
-
       </div>
     </>
   );
@@ -668,115 +507,59 @@ export default function CityMateNavbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const h = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
   }, []);
 
   return (
-    <div style={{ fontFamily: "'DM Sans',sans-serif", background: "#F0F7FF", color: "#1E3A8A" }}>
-
+    <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#F0F7FF", color:"#1E3A8A" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Nunito:wght@700;800;900&display=swap');
-        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-
-        @keyframes fadeUp    { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes iconPop   { 0%{transform:scale(1)} 40%{transform:scale(1.14)} 100%{transform:scale(1)} }
-        @keyframes cm-spin   { to { transform: rotate(360deg); } }
-
-        .cm-input { color:#111827 !important; }
-        .cm-input::placeholder { color:#9CA3AF !important; opacity:1; }
-        .cm-input::-webkit-input-placeholder { color:#9CA3AF !important; }
-        .cm-input::-moz-placeholder { color:#9CA3AF !important; opacity:1; }
-
-        .cm-card {
-          display:flex; flex-direction:column; align-items:center; gap:10px;
-          cursor:pointer; padding:8px 6px; border-radius:14px;
-          transition:background 0.2s, transform 0.2s;
-          animation:fadeUp 0.45s ease both;
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        @keyframes fadeUp  {from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes iconPop {0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+        @keyframes cm-spin {to{transform:rotate(360deg)}}
+        .cm-input{color:#111827!important}.cm-input::placeholder{color:#9CA3AF!important;opacity:1}
+        .cm-card{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;padding:8px 6px;border-radius:14px;transition:background 0.2s,transform 0.2s;animation:fadeUp 0.45s ease both}
+        .cm-card:hover{background:rgba(37,99,235,0.06);transform:translateY(-4px)}
+        .cm-icon-box{width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(0,0,0,0.07);box-shadow:0 3px 12px rgba(0,0,0,0.08);transition:box-shadow 0.2s,transform 0.2s}
+        .cm-card:hover .cm-icon-box{box-shadow:0 10px 28px rgba(37,99,235,0.18);transform:scale(1.06);animation:iconPop 0.35s ease forwards}
+        .cm-label{font-size:12px;font-weight:700;text-align:center;line-height:1.35;max-width:80px;color:#1E40AF;letter-spacing:-0.1px}
+        .cm-input{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;color:#111827;width:100%}
+        .cm-btn{background:#2563EB;color:#fff;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;transition:background 0.18s}
+        .cm-btn:hover{background:#1D4ED8}
+        .cm-btn-ghost{background:#fff;color:#2563EB;border:1.5px solid #BFDBFE;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;transition:all 0.18s}
+        .cm-btn-ghost:hover{background:#EFF6FF;border-color:#2563EB}
+        .cm-navlink{font-size:13.5px;font-weight:600;color:#374151;text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:all 0.18s}
+        .cm-navlink:hover{color:#2563EB;border-bottom-color:#2563EB}
+        .cm-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+        @media(max-width:1024px){.cm-grid{grid-template-columns:repeat(4,1fr)!important}}
+        @media(max-width:768px){
+          .cm-desktop{display:none!important}.cm-mobile{display:flex!important}
+          .cm-grid{grid-template-columns:repeat(4,1fr)!important;gap:12px 8px!important}
+          .cm-search-row{flex-direction:column!important;border-radius:12px!important}
+          .cm-loc-box{border-right:none!important;border-bottom:1.5px solid #BFDBFE!important;width:100%!important}
         }
-        .cm-card:hover { background:rgba(37,99,235,0.06); transform:translateY(-4px); }
-
-        .cm-icon-box {
-          width:72px; height:72px; border-radius:18px;
-          display:flex; align-items:center; justify-content:center;
-          border:1.5px solid rgba(0,0,0,0.07);
-          box-shadow:0 3px 12px rgba(0,0,0,0.08);
-          transition:box-shadow 0.2s, transform 0.2s;
-          position:relative; overflow:hidden;
+        @media(max-width:500px){
+          .cm-grid{grid-template-columns:repeat(3,1fr)!important}
+          .cm-icon-box{width:62px!important;height:62px!important;border-radius:15px!important}
+          .cm-label{font-size:11px!important;max-width:68px!important}
         }
-        .cm-card:hover .cm-icon-box {
-          box-shadow:0 10px 28px rgba(37,99,235,0.18);
-          transform:scale(1.06);
-          animation:iconPop 0.35s ease forwards;
-        }
-
-        .cm-label {
-          font-size:12px; font-weight:700; text-align:center;
-          line-height:1.35; max-width:80px; color:#1E40AF;
-          letter-spacing:-0.1px;
-        }
-
-        .cm-input {
-          border:none; outline:none; background:transparent;
-          font-family:'DM Sans',sans-serif; font-size:14px; color:#111827; width:100%;
-        }
-
-        .cm-btn {
-          background:#2563EB; color:#fff; border:none;
-          cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:700;
-          transition:background 0.18s;
-        }
-        .cm-btn:hover { background:#1D4ED8; }
-
-        .cm-btn-ghost {
-          background:#fff; color:#2563EB; border:1.5px solid #BFDBFE;
-          cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:700;
-          transition:all 0.18s;
-        }
-        .cm-btn-ghost:hover { background:#EFF6FF; border-color:#2563EB; }
-
-        .cm-navlink {
-          font-size:13.5px; font-weight:600; color:#374151;
-          text-decoration:none; padding:4px 0;
-          border-bottom:2px solid transparent; transition:all 0.18s;
-        }
-        .cm-navlink:hover { color:#2563EB; border-bottom-color:#2563EB; }
-
-        .cm-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
-
-        @media (max-width:1024px) { .cm-grid { grid-template-columns:repeat(4,1fr) !important; } }
-        @media (max-width:768px) {
-          .cm-desktop { display:none !important; }
-          .cm-mobile  { display:flex !important; }
-          .cm-grid    { grid-template-columns:repeat(4,1fr) !important; gap:12px 8px !important; }
-          .cm-search-row { flex-direction:column !important; border-radius:12px !important; }
-          .cm-loc-box    { border-right:none !important; border-bottom:1.5px solid #BFDBFE !important; width:100% !important; }
-        }
-        @media (max-width:500px) {
-          .cm-grid { grid-template-columns:repeat(3,1fr) !important; }
-          .cm-icon-box { width:62px !important; height:62px !important; border-radius:15px !important; }
-          .cm-label { font-size:11px !important; max-width:68px !important; }
-        }
-        @media (max-width:360px) {
-          .cm-grid { grid-template-columns:repeat(3,1fr) !important; gap:8px 4px !important; }
-          .cm-icon-box { width:56px !important; height:56px !important; }
+        @media(max-width:360px){
+          .cm-grid{grid-template-columns:repeat(3,1fr)!important;gap:8px 4px!important}
+          .cm-icon-box{width:56px!important;height:56px!important}
         }
       `}</style>
 
-      {/* ══ NAVBAR ══ */}
-      <nav style={{
-        background: "#fff", borderBottom: "1.5px solid #DBEAFE",
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-        boxShadow: scrolled ? "0 4px 20px rgba(37,99,235,0.12)" : "0 1px 4px rgba(37,99,235,0.05)",
-        transition: "box-shadow 0.3s",
-      }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "10px 16px", display: "flex", alignItems: "center", gap: "14px" }}>
+      {/* ── NAVBAR ── */}
+      <nav style={{ background:"#fff", borderBottom:"1.5px solid #DBEAFE", position:"fixed", top:0, left:0, right:0, zIndex:1000, boxShadow:scrolled?"0 4px 20px rgba(37,99,235,0.12)":"0 1px 4px rgba(37,99,235,0.05)", transition:"box-shadow 0.3s" }}>
+        <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"10px 16px", display:"flex", alignItems:"center", gap:"14px" }}>
 
           {/* Logo */}
-          <Link to="/" style={{ textDecoration: "none", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-              <div style={{ width: "40px", height: "40px", background: "linear-gradient(135deg,#2563EB,#1D4ED8)", borderRadius: "11px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>
+          <Link to="/" style={{ textDecoration:"none", flexShrink:0 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"9px" }}>
+              <div style={{ width:"40px", height:"40px", background:"linear-gradient(135deg,#2563EB,#1D4ED8)", borderRadius:"11px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(37,99,235,0.35)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <rect x="2"  y="2"  width="9" height="9" rx="2" fill="#fff" opacity="0.95"/>
                   <rect x="13" y="2"  width="9" height="9" rx="2" fill="#fff" opacity="0.6"/>
@@ -785,101 +568,76 @@ export default function CityMateNavbar() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: "21px", fontWeight: 900, fontFamily: "'Nunito',sans-serif", lineHeight: 1.05, letterSpacing: "-0.3px" }}>
-                  <span style={{ color: "#111827" }}>City</span><span style={{ color: "#2563EB" }}>Mate</span>
+                <div style={{ fontSize:"21px", fontWeight:900, fontFamily:"'Nunito',sans-serif", lineHeight:1.05, letterSpacing:"-0.3px" }}>
+                  <span style={{ color:"#111827" }}>City</span><span style={{ color:"#2563EB" }}>Mate</span>
                 </div>
-                <div style={{ fontSize: "9px", color: "#93C5FD", fontWeight: 600, letterSpacing: "0.04em" }}>Your City. Simplified.</div>
+                <div style={{ fontSize:"9px", color:"#93C5FD", fontWeight:600, letterSpacing:"0.04em" }}>Your City. Simplified.</div>
               </div>
             </div>
           </Link>
 
           {/* Desktop Search */}
-          <div className="cm-desktop" style={{ flex: 1, maxWidth: "580px" }}>
-            <div className="cm-search-row" style={{ display: "flex", alignItems: "center", border: "2px solid #2563EB", borderRadius: "10px", overflow: "hidden", height: "46px", background: "#fff", boxShadow: "0 2px 14px rgba(37,99,235,0.12)" }}>
+          <div className="cm-desktop" style={{ flex:1, maxWidth:"580px" }}>
+            <div className="cm-search-row" style={{ display:"flex", alignItems:"center", border:"2px solid #2563EB", borderRadius:"10px", overflow:"hidden", height:"46px", background:"#fff", boxShadow:"0 2px 14px rgba(37,99,235,0.12)" }}>
               <LocationButton locVal={locVal} setLocVal={setLocVal} />
               <input className="cm-input" value={searchVal} onChange={e => setSearchVal(e.target.value)}
-                placeholder="Search services" style={{ flex: 1, padding: "0 14px" }}
-                onKeyDown={e => e.key === "Enter" && navigate("/search")} />
-              <button className="cm-btn" onClick={() => navigate("/search")}
-                style={{ padding: "0 22px", height: "100%", fontSize: "14px", borderRadius: "0", flexShrink: 0, display: "flex", alignItems: "center", gap: "7px" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="2.2"/>
-                  <path d="M21 21l-4.35-4.35" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
-                </svg>
+                placeholder="Search services" style={{ flex:1, padding:"0 14px" }}
+                onKeyDown={e => e.key==="Enter" && navigate("/search")} />
+              <button className="cm-btn" onClick={() => navigate("/search")} style={{ padding:"0 22px", height:"100%", fontSize:"14px", borderRadius:"0", flexShrink:0, display:"flex", alignItems:"center", gap:"7px" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="2.2"/><path d="M21 21l-4.35-4.35" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
                 Search
               </button>
             </div>
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="cm-desktop" style={{ display: "flex", alignItems: "center", gap: "18px", marginLeft: "auto" }}>
+          {/* Desktop Nav */}
+          <div className="cm-desktop" style={{ display:"flex", alignItems:"center", gap:"18px", marginLeft:"auto" }}>
             <Link to="/services"         className="cm-navlink">Services</Link>
             <Link to="/rooms"            className="cm-navlink">Rooms</Link>
-            <Link to="/become-a-partner" className="cm-navlink" style={{ color: "#2563EB", fontWeight: 700 }}>Become a Partner</Link>
-            <div style={{ width: "1px", height: "18px", background: "#BFDBFE" }} />
-            <button className="cm-btn-ghost" onClick={() => navigate("/login")}
-              style={{ padding: "7px 16px", fontSize: "13px", borderRadius: "8px" }}>Login</button>
-            <button className="cm-btn" onClick={() => navigate("/signup")}
-              style={{ padding: "8px 18px", fontSize: "13px", borderRadius: "8px" }}>Sign up</button>
+            <Link to="/become-a-partner" className="cm-navlink" style={{ color:"#2563EB", fontWeight:700 }}>Become a Partner</Link>
+            <div style={{ width:"1px", height:"18px", background:"#BFDBFE" }} />
+            <button className="cm-btn-ghost" onClick={() => navigate("/login")}  style={{ padding:"7px 16px", fontSize:"13px", borderRadius:"8px" }}>Login</button>
+            <button className="cm-btn"       onClick={() => navigate("/signup")} style={{ padding:"8px 18px", fontSize:"13px", borderRadius:"8px" }}>Sign up</button>
           </div>
 
           {/* Mobile buttons */}
-          <div className="cm-mobile" style={{ display: "none", marginLeft: "auto", alignItems: "center", gap: "8px" }}>
-            <button className="cm-btn" onClick={() => navigate("/signup")}
-              style={{ padding: "8px 14px", fontSize: "13px", borderRadius: "8px" }}>Join</button>
-            <button onClick={() => setMobileOpen(true)}
-              style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE", padding: "9px", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" fill="none">
-                <path d="M3 12h18M3 6h18M3 18h18"/>
-              </svg>
+          <div className="cm-mobile" style={{ display:"none", marginLeft:"auto", alignItems:"center", gap:"8px" }}>
+            <button className="cm-btn" onClick={() => navigate("/signup")} style={{ padding:"8px 14px", fontSize:"13px", borderRadius:"8px" }}>Join</button>
+            <button onClick={() => setMobileOpen(true)} style={{ background:"#EFF6FF", border:"1.5px solid #BFDBFE", padding:"9px", borderRadius:"8px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" fill="none"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Spacer */}
-      <div style={{ height: "68px" }}/>
+      <div style={{ height:"68px" }} />
 
-      {/* Mobile Search Bar */}
-      <div className="cm-mobile" style={{ display: "none", padding: "10px 14px", background: "#fff", borderBottom: "1.5px solid #DBEAFE" }}>
-        <div style={{ display: "flex", border: "2px solid #2563EB", borderRadius: "10px", overflow: "hidden", width: "100%", height: "44px", background: "#fff" }}>
-          <input className="cm-input" placeholder="Search cleaning, PG, plumbing…"
-            style={{ flex: 1, padding: "0 14px" }}
-            onKeyDown={e => e.key === "Enter" && navigate("/search")} />
-          <button className="cm-btn" onClick={() => navigate("/search")}
-            style={{ padding: "0 16px", borderRadius: "0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="2.2"/>
-              <path d="M21 21l-4.35-4.35" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
-            </svg>
+      {/* Mobile Search */}
+      <div className="cm-mobile" style={{ display:"none", padding:"10px 14px", background:"#fff", borderBottom:"1.5px solid #DBEAFE" }}>
+        <div style={{ display:"flex", border:"2px solid #2563EB", borderRadius:"10px", overflow:"hidden", width:"100%", height:"44px", background:"#fff" }}>
+          <input className="cm-input" placeholder="Search cleaning, PG, plumbing…" style={{ flex:1, padding:"0 14px" }} onKeyDown={e => e.key==="Enter" && navigate("/search")} />
+          <button className="cm-btn" onClick={() => navigate("/search")} style={{ padding:"0 16px", borderRadius:"0", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="2.2"/><path d="M21 21l-4.35-4.35" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
           </button>
         </div>
       </div>
 
-      {/* ══ HERO CAROUSEL ══ */}
+      {/* ── HERO CAROUSEL ── */}
       <HeroCarousel />
 
-      {/* ══ SERVICE ICON GRID ══ */}
-      <div style={{ background: "#fff", padding: "22px 16px 24px", borderBottom: "1.5px solid #DBEAFE" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+      {/* ── SERVICE GRID ── */}
+      <div style={{ background:"#fff", padding:"22px 16px 24px", borderBottom:"1.5px solid #DBEAFE" }}>
+        <div style={{ maxWidth:"1200px", margin:"0 auto" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"18px" }}>
             <div>
-              <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#1E3A8A", fontFamily: "'Nunito',sans-serif", lineHeight: 1 }}>
-                Our Services
-              </h2>
-              <p style={{ fontSize: "12px", color: "#93C5FD", marginTop: "3px", fontWeight: 500 }}>
-                Trusted professionals near {locVal}
-              </p>
+              <h2 style={{ fontSize:"16px", fontWeight:800, color:"#1E3A8A", fontFamily:"'Nunito',sans-serif", lineHeight:1 }}>Our Services</h2>
+              <p style={{ fontSize:"12px", color:"#93C5FD", marginTop:"3px", fontWeight:500 }}>Trusted professionals near {locVal}</p>
             </div>
           </div>
           <div className="cm-grid">
             {CITYMATE_SERVICES.map((svc, i) => (
-              <div key={svc.label} className="cm-card"
-                style={{ animationDelay: `${i * 0.04}s` }}
-                onClick={() => navigate(`/services/${svc.path}`)}>
-                <div className="cm-icon-box" style={{ background: svc.bg }}>
-                  <svc.Icon />
-                </div>
+              <div key={svc.label} className="cm-card" style={{ animationDelay:`${i*0.04}s` }} onClick={() => navigate(`/services/${svc.path}`)}>
+                <div className="cm-icon-box" style={{ background:svc.bg }}><svc.Icon /></div>
                 <span className="cm-label">{svc.label}</span>
               </div>
             ))}
@@ -887,7 +645,6 @@ export default function CityMateNavbar() {
         </div>
       </div>
 
-      {/* ══ MOBILE MENU ══ */}
       {mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} />}
     </div>
   );
