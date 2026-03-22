@@ -21,7 +21,10 @@ app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use((err, req, res, next) => {
+  console.error('ERROR STACK:', err.stack);
+  next(err);
+});
 // ── Routes ────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 

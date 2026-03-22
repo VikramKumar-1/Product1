@@ -51,7 +51,45 @@ const registerPartner = async (body, files) => {
 };
 // ─── STEP 2: KYC Details ─────────────────────────────────────────────────────
 
-const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
+// const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
+//   if (!AADHAR_REGEX.test(aadharNumber)) throw new AppError('Aadhar must be 12 digits', 400);
+//   if (!PAN_REGEX.test(panNumber)) throw new AppError('Invalid PAN format (e.g., ABCDE1234F)', 400);
+
+//   const [dupAadharApp, dupPanApp, dupAadharPartner, dupPanPartner] = await Promise.all([
+//     PartnerApplication.findOne({ 'kyc.aadharNumber': aadharNumber, _id: { $ne: applicationId } }),
+//     PartnerApplication.findOne({ 'kyc.panNumber': panNumber, _id: { $ne: applicationId } }),
+//     Partner.findOne({ 'kyc.aadharNumber': aadharNumber }),
+//     Partner.findOne({ 'kyc.panNumber': panNumber }),
+//   ]);
+
+//   if (dupAadharApp || dupAadharPartner) throw new AppError('Aadhar number already registered', 409);
+//   if (dupPanApp || dupPanPartner) throw new AppError('PAN number already registered', 409);
+
+//   const aadharFrontImage = files?.aadharFrontImage?.[0]?.path;
+//   const aadharBackImage = files?.aadharBackImage?.[0]?.path;
+
+//   if (!aadharFrontImage || !aadharBackImage) {
+//     throw new AppError('Aadhar front and back images are required', 400);
+//   }
+
+//   const application = await PartnerApplication.findByIdAndUpdate(
+//     applicationId,
+//     { kyc: { aadharNumber, aadharFrontImage, aadharBackImage, panNumber }, stepCompleted: 2 },
+//     { new: true, runValidators: true }
+//   );
+
+//   if (!application) throw new AppError('Application not found', 404);
+
+//   return { message: 'KYC details saved successfully' };
+// };
+
+const submitKyc = async (body, files) => {
+  // trim all keys to handle accidental spaces from form-data
+  const cleanBody = Object.fromEntries(
+    Object.entries(body).map(([k, v]) => [k.trim(), v])
+  );
+  const { applicationId, aadharNumber, panNumber } = cleanBody;
+
   if (!AADHAR_REGEX.test(aadharNumber)) throw new AppError('Aadhar must be 12 digits', 400);
   if (!PAN_REGEX.test(panNumber)) throw new AppError('Invalid PAN format (e.g., ABCDE1234F)', 400);
 
@@ -155,6 +193,32 @@ const submitAdditionalDetails = async ({ applicationId, ...details }, files) => 
   await application.save();
 
   return { message: 'Additional details saved successfully' };
+};
+
+// Get application for preview
+const getApplication = async (applicationId) => {
+  const application = await PartnerApplication.findById(applicationId)
+    .select('-basicInfo.password');
+  if (!application) throw new AppError('Application not found', 404);
+  return { application };
+};
+
+// Edit application before submit
+const editApplication = async (applicationId, body) => {
+  const application = await PartnerApplication.findById(applicationId);
+  if (!application) throw new AppError('Application not found', 404);
+  if (application.status !== 'draft') {
+    throw new AppError('Cannot edit submitted application', 400);
+  }
+  // Only update fields that are sent
+  if (body.basicInfo) application.basicInfo = { ...application.basicInfo, ...body.basicInfo };
+  if (body.kyc) application.kyc = { ...application.kyc, ...body.kyc };
+  if (body.address) application.address = { ...application.address, ...body.address };
+  if (body.payment) application.payment = { ...application.payment, ...body.payment };
+  if (body.additionalDetails) application.additionalDetails = { ...application.additionalDetails, ...body.additionalDetails };
+
+  await application.save();
+  return { message: 'Application updated successfully' };
 };
 
 // ─── STEP 6: Final Submit ─────────────────────────────────────────────────────
@@ -315,7 +379,50 @@ const getPartnerApplications = async ({ status, page = 1, limit = 20 }) => {
   return { applications, total, page: Number(page), pages: Math.ceil(total / limit) };
 };
 
+const approveApplication = async (applicationId) => {
+  const application = await PartnerApplication.findById(applicationId);
+  if (!application) throw new AppError('Application not found', 404);
+  if (application.status !== 'pending') {
+    throw new AppError('Only pending applications can be approved', 400);
+  }
 
+  const { basicInfo, kyc, address, payment, additionalDetails, userId } = application;
+
+  // Create partner record
+  const partner = await Partner.create({
+    name: basicInfo.name,
+    email: basicInfo.email,
+    mobile: basicInfo.mobile,
+    password: basicInfo.password, // already hashed
+    profileImage: basicInfo.profileImage,
+    partnerType: basicInfo.partnerType,
+    kyc,
+    address,
+    payment,
+    additionalDetails,
+  });
+
+  if (userId) {
+    // Case 1: was a logged in user — update existing user role
+    await User.findByIdAndUpdate(userId, { role: 'partner' });
+  } else {
+    // Case 2: was a guest — create new user account with partner role
+    await User.create({
+      name: basicInfo.name,
+      email: basicInfo.email,
+      mobile: basicInfo.mobile,
+      password: basicInfo.password, // already hashed
+      role: 'partner',
+      isVerified: true,
+      authProvider: 'local',
+    });
+  }
+
+  application.status = 'approved';
+  await application.save();
+
+  return { message: 'Partner approved successfully', partnerId: partner._id };
+};
 
 const rejectApplication = async (applicationId, rejectionReason) => {
   const application = await PartnerApplication.findById(applicationId);
@@ -370,6 +477,8 @@ module.exports = {
   submitAddress,
   submitPayment,
   submitAdditionalDetails,
+  getApplication,
+  editApplication,
   submitApplication,
   loginPartner,
   logoutPartner,

@@ -25,6 +25,8 @@ onboardingRouter.post('/kyc',                    partnerOnboardingUpload, contro
 onboardingRouter.post('/address',                                         controller.submitAddress);
 onboardingRouter.post('/payment',                                         controller.submitPayment);
 onboardingRouter.post('/additional-details',     partnerOnboardingUpload, controller.submitAdditionalDetails);
+onboardingRouter.get('/application/:id',   controller.getApplication);
+onboardingRouter.patch('/application/:id', controller.editApplication);
 onboardingRouter.post('/submit',                                          controller.submitApplication);
 
 // ─── Partner Dashboard Auth ───────────────────────────────────────────────────
@@ -40,4 +42,8 @@ router.put('/:id/review', authenticate, controller.updateReview);
 // ─── Reports (requires user auth) ────────────────────────────────────────────
 
 router.post('/:id/report', authenticate, controller.reportPartner);
+
+// ─── Mount onboarding group ───────────────────────────────────────────────────
+router.use('/', onboardingRouter); 
+
 module.exports = router;

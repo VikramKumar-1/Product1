@@ -33,7 +33,15 @@ exports.register = catchAsync(async (req, res) => {
  * POST /api/partners/kyc
  * Step 3: KYC documents
  */
+/*exports.submitKyc = catchAsync(async (req, res) => {
+  const result = await partnerService.submitKyc(req.body, req.files);
+  sendSuccess(res, 200, result);
+});*/
 exports.submitKyc = catchAsync(async (req, res) => {
+   // trim all keys to handle accidental spaces from form-data
+  
+  console.log('BODY:', req.body);
+  console.log('FILES:', req.files);
   const result = await partnerService.submitKyc(req.body, req.files);
   sendSuccess(res, 200, result);
 });
@@ -62,6 +70,17 @@ exports.submitPayment = catchAsync(async (req, res) => {
  */
 exports.submitAdditionalDetails = catchAsync(async (req, res) => {
   const result = await partnerService.submitAdditionalDetails(req.body, req.files);
+  sendSuccess(res, 200, result);
+});
+
+// for preview before submitting API - get('/application/:id',
+exports.getApplication = catchAsync(async (req, res) => {
+  const result = await partnerService.getApplication(req.params.id);
+  sendSuccess(res, 200, result);
+});
+// in preview edit API - patch('/application/:id'
+exports.editApplication = catchAsync(async (req, res) => {
+  const result = await partnerService.editApplication(req.params.id, req.body);
   sendSuccess(res, 200, result);
 });
 

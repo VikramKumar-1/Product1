@@ -11,7 +11,7 @@ const partnerApplicationSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: false
     },
 
     basicInfo: {
@@ -80,11 +80,10 @@ partnerApplicationSchema.index({ 'kyc.aadharNumber': 1 }, { sparse: true });
 partnerApplicationSchema.index({ status: 1 });
 
 // Hash password before saving if modified
-partnerApplicationSchema.pre('save', async function (next) {
+partnerApplicationSchema.pre('save', async function () {
   if (this.isModified('basicInfo.password') && this.basicInfo?.password) {
     this.basicInfo.password = await bcrypt.hash(this.basicInfo.password, 12);
   }
-  next();
 });
 
 module.exports = mongoose.model('PartnerApplication', partnerApplicationSchema);

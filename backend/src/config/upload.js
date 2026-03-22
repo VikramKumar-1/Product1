@@ -2,15 +2,9 @@ const multer = require('multer');
 const path = require('path');
 const AppError = require('../utils/AppError');
 
-/**
- * Multer configuration for partner file uploads.
- * Files are stored locally during development.
- * Switch storage to S3 by replacing diskStorage with multer-s3.
- */
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/partners/'); // ensure this directory exists
+    cb(null, 'uploads/partners/');
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
@@ -30,19 +24,23 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB per file
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-/**
- * Fields accepted during different onboarding steps.
- */
-const partnerOnboardingUpload = upload.fields([
-  { name: 'profileImage', maxCount: 1 },
-  { name: 'aadharFrontImage', maxCount: 1 },
-  { name: 'aadharBackImage', maxCount: 1 },
-  { name: 'drivingLicenseImage', maxCount: 1 },
-  { name: 'rcBookImage', maxCount: 1 },
-  { name: 'insuranceImage', maxCount: 1 },
-]);
+// ← Export as function, not pre-called middleware
+const partnerOnboardingUpload = (req, res, next) => {
+  upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'aadharFrontImage', maxCount: 1 },
+    { name: 'aadharBackImage', maxCount: 1 },
+    { name: 'drivingLicenseImage', maxCount: 1 },
+    { name: 'rcBookImage', maxCount: 1 },
+    { name: 'insuranceImage', maxCount: 1 },
+  ])(req, res, next);
+};
 
-module.exports = { upload, partnerOnboardingUpload };
+const userAvatarUpload = (req, res, next) => {
+  upload.single('avatar')(req, res, next);
+};
+
+module.exports = { upload, partnerOnboardingUpload, userAvatarUpload };
