@@ -21,10 +21,10 @@ exports.register = catchAsync(async (req, res) => {
  * POST /api/partners/verify-otp
  * Step 2: OTP verification
  */
-exports.verifyOtp = catchAsync(async (req, res) => {
+/*exports.verifyOtp = catchAsync(async (req, res) => {
   const result = await partnerService.verifyOtp(req.body);
   sendSuccess(res, 200, result);
-});
+});*/
 
 /**
  * POST /api/partners/kyc

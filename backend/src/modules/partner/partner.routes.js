@@ -12,7 +12,7 @@ const authenticate = require('../../middleware/authenticate');
 // ─── Partner Onboarding (user must be logged in) ──────────────────────────────
 
 router.post('/register', authenticate, partnerOnboardingUpload, controller.register);
-router.post('/verify-otp', authenticate, controller.verifyOtp);
+//router.post('/verify-otp', authenticate, controller.verifyOtp);
 router.post('/kyc', authenticate, partnerOnboardingUpload, controller.submitKyc);
 router.post('/address', authenticate, controller.submitAddress);
 router.post('/payment', authenticate, controller.submitPayment);

@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -17,113 +16,43 @@ const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// ─── OTP helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Generate 6-digit OTP and return plain + hashed versions.
- */
-const generateOtp = async () => {
-  const plain = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashed = await bcrypt.hash(plain, 10);
-  return { plain, hashed };
-};
-
-/**
- * Send OTP via email (stub — replace with actual email service).
- */
-const sendOtpEmail = async (email, otp) => {
-  // TODO: integrate with email.service.js (Nodemailer / SES / SendGrid)
-  console.log(`[OTP] Sending OTP ${otp} to ${email}`);
-};
-
 // ─── STEP 1: Basic Registration ───────────────────────────────────────────────
 
 const registerPartner = async (body, files) => {
-  const { name, email, mobile, password, partnerType } = body;
+  const { name, email, mobile, password, partnerType, userId } = body;
 
-  // Validate inputs
   if (!EMAIL_REGEX.test(email)) throw new AppError('Invalid email address', 400);
   if (!MOBILE_REGEX.test(mobile)) throw new AppError('Invalid mobile number', 400);
   if (!name || !password || !partnerType) throw new AppError('All fields are required', 400);
 
-  // OTP rate limiting — max 5 requests per hour per email
-  const existing = await PartnerApplication.findOne({ 'basicInfo.email': email });
-  if (existing) {
-    const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    if (existing.otpRequestCount >= 5 && existing.otpLastRequestedAt > hourAgo) {
-      throw new AppError('Too many OTP requests. Please try again after an hour.', 429);
-    }
-  }
-
   const profileImage = files?.profileImage?.[0]?.path || null;
 
-  const { plain: otpPlain, hashed: otpHashed } = await generateOtp();
-  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  const existing = await PartnerApplication.findOne({ 'basicInfo.email': email });
 
   let application;
 
   if (existing) {
-    // Re-registration attempt — update existing draft
     existing.basicInfo = { name, email, mobile, password, partnerType, profileImage };
-    existing.otp = otpHashed;
-    existing.otpExpires = otpExpires;
-    existing.otpRequestCount = (existing.otpRequestCount || 0) + 1;
-    existing.otpLastRequestedAt = new Date();
     existing.stepCompleted = 1;
     existing.status = 'draft';
     application = await existing.save();
   } else {
     application = await PartnerApplication.create({
-       userId: body.userId, 
+      userId,
       basicInfo: { name, email, mobile, password, partnerType, profileImage },
-      otp: otpHashed,
-      otpExpires,
-      otpRequestCount: 1,
-      otpLastRequestedAt: new Date(),
       stepCompleted: 1,
     });
   }
 
-  await sendOtpEmail(email, otpPlain);
-
-  return { applicationId: application._id, message: 'OTP sent to your email' };
+  return { applicationId: application._id, message: 'Basic info saved successfully' };
 };
 
-// ─── STEP 2: OTP Verification ─────────────────────────────────────────────────
-
-const verifyOtp = async ({ email, otp }) => {
-  if (!email || !otp) throw new AppError('Email and OTP are required', 400);
-
-  const application = await PartnerApplication.findOne({ 'basicInfo.email': email });
-  if (!application) throw new AppError('Application not found', 404);
-
-  if (!application.otp || !application.otpExpires) {
-    throw new AppError('No OTP requested. Please register first.', 400);
-  }
-
-  if (application.otpExpires < new Date()) {
-    throw new AppError('OTP has expired. Please request a new one.', 400);
-  }
-
-  const isMatch = await bcrypt.compare(otp, application.otp);
-  if (!isMatch) throw new AppError('Invalid OTP', 400);
-
-  // Clear OTP after successful verification
-  application.otp = undefined;
-  application.otpExpires = undefined;
-  application.stepCompleted = 2;
-  await application.save();
-
-  return { applicationId: application._id, message: 'OTP verified successfully' };
-};
-
-// ─── STEP 3: KYC Details ─────────────────────────────────────────────────────
+// ─── STEP 2: KYC Details ─────────────────────────────────────────────────────
 
 const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
   if (!AADHAR_REGEX.test(aadharNumber)) throw new AppError('Aadhar must be 12 digits', 400);
   if (!PAN_REGEX.test(panNumber)) throw new AppError('Invalid PAN format (e.g., ABCDE1234F)', 400);
 
-  // Prevent duplicate Aadhar / PAN across applications and partners
   const [dupAadharApp, dupPanApp, dupAadharPartner, dupPanPartner] = await Promise.all([
     PartnerApplication.findOne({ 'kyc.aadharNumber': aadharNumber, _id: { $ne: applicationId } }),
     PartnerApplication.findOne({ 'kyc.panNumber': panNumber, _id: { $ne: applicationId } }),
@@ -143,7 +72,7 @@ const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
 
   const application = await PartnerApplication.findByIdAndUpdate(
     applicationId,
-    { kyc: { aadharNumber, aadharFrontImage, aadharBackImage, panNumber }, stepCompleted: 3 },
+    { kyc: { aadharNumber, aadharFrontImage, aadharBackImage, panNumber }, stepCompleted: 2 },
     { new: true, runValidators: true }
   );
 
@@ -152,7 +81,7 @@ const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
   return { message: 'KYC details saved successfully' };
 };
 
-// ─── STEP 4: Address Details ──────────────────────────────────────────────────
+// ─── STEP 3: Address Details ──────────────────────────────────────────────────
 
 const submitAddress = async ({ applicationId, fullAddress, city, state, pincode }) => {
   if (!fullAddress || !city || !state || !pincode) {
@@ -161,7 +90,7 @@ const submitAddress = async ({ applicationId, fullAddress, city, state, pincode 
 
   const application = await PartnerApplication.findByIdAndUpdate(
     applicationId,
-    { address: { fullAddress, city, state, pincode }, stepCompleted: 4 },
+    { address: { fullAddress, city, state, pincode }, stepCompleted: 3 },
     { new: true }
   );
 
@@ -170,7 +99,7 @@ const submitAddress = async ({ applicationId, fullAddress, city, state, pincode 
   return { message: 'Address saved successfully' };
 };
 
-// ─── STEP 5: Payment Details ──────────────────────────────────────────────────
+// ─── STEP 4: Payment Details ──────────────────────────────────────────────────
 
 const submitPayment = async ({ applicationId, method, ...paymentFields }) => {
   if (!['bank_transfer', 'upi'].includes(method)) {
@@ -194,7 +123,7 @@ const submitPayment = async ({ applicationId, method, ...paymentFields }) => {
 
   const application = await PartnerApplication.findByIdAndUpdate(
     applicationId,
-    { payment, stepCompleted: 5 },
+    { payment, stepCompleted: 4 },
     { new: true }
   );
 
@@ -203,13 +132,12 @@ const submitPayment = async ({ applicationId, method, ...paymentFields }) => {
   return { message: 'Payment details saved successfully' };
 };
 
-// ─── STEP 6: Additional Details (Dynamic) ────────────────────────────────────
+// ─── STEP 5: Additional Details (Dynamic) ────────────────────────────────────
 
 const submitAdditionalDetails = async ({ applicationId, ...details }, files) => {
   const application = await PartnerApplication.findById(applicationId);
   if (!application) throw new AppError('Application not found', 404);
 
-  // Merge uploaded file paths into details for transporter-type partners
   if (files?.drivingLicenseImage?.[0]) {
     details.drivingLicenseImage = files.drivingLicenseImage[0].path;
   }
@@ -221,21 +149,21 @@ const submitAdditionalDetails = async ({ applicationId, ...details }, files) => 
   }
 
   application.additionalDetails = details;
-  application.stepCompleted = 6;
+  application.stepCompleted = 5;
   await application.save();
 
   return { message: 'Additional details saved successfully' };
 };
 
-// ─── STEP 7: Final Submit ─────────────────────────────────────────────────────
+// ─── STEP 6: Final Submit ─────────────────────────────────────────────────────
 
 const submitApplication = async ({ applicationId }) => {
   const application = await PartnerApplication.findById(applicationId);
   if (!application) throw new AppError('Application not found', 404);
 
-  if (application.stepCompleted < 6) {
+  if (application.stepCompleted < 5) {
     throw new AppError(
-      `Please complete all steps. You have completed step ${application.stepCompleted} of 6.`,
+      `Please complete all steps. You have completed step ${application.stepCompleted} of 5.`,
       400
     );
   }
@@ -312,13 +240,12 @@ const addReview = async ({ partnerId, userId, rating, reviewText }) => {
 
   await PartnerReview.create({ partnerId, userId, rating, reviewText });
 
-  // Recalculate ratingAverage using running average formula
   const newCount = partner.ratingCount + 1;
   const newAvg = ((partner.ratingAverage * partner.ratingCount) + rating) / newCount;
 
   partner.ratingCount = newCount;
   partner.reviewCount = newCount;
-  partner.ratingAverage = Math.round(newAvg * 10) / 10; // round to 1 decimal
+  partner.ratingAverage = Math.round(newAvg * 10) / 10;
   await partner.save({ validateBeforeSave: false });
 
   return { message: 'Review submitted successfully' };
@@ -335,7 +262,6 @@ const updateReview = async ({ partnerId, userId, rating, reviewText }) => {
   review.reviewText = reviewText || review.reviewText;
   await review.save();
 
-  // Recalculate ratingAverage after update
   const partner = await Partner.findById(partnerId);
   if (partner && partner.ratingCount > 0) {
     const newAvg =
@@ -377,7 +303,7 @@ const getPartnerApplications = async ({ status, page = 1, limit = 20 }) => {
 
   const [applications, total] = await Promise.all([
     PartnerApplication.find(filter)
-      .select('-basicInfo.password -otp -otpExpires')
+      .select('-basicInfo.password')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit)),
@@ -394,14 +320,13 @@ const approveApplication = async (applicationId) => {
     throw new AppError('Only pending applications can be approved', 400);
   }
 
-  // Move data from application → partners collection
   const { basicInfo, kyc, address, payment, additionalDetails } = application;
 
   const partner = await Partner.create({
     name: basicInfo.name,
     email: basicInfo.email,
     mobile: basicInfo.mobile,
-    password: basicInfo.password, // already hashed
+    password: basicInfo.password,
     profileImage: basicInfo.profileImage,
     partnerType: basicInfo.partnerType,
     kyc,
@@ -409,10 +334,12 @@ const approveApplication = async (applicationId) => {
     payment,
     additionalDetails,
   });
-     await User.findOneAndUpdate(
+
+  await User.findOneAndUpdate(
     { email: basicInfo.email },
     { role: 'partner' }
   );
+
   application.status = 'approved';
   await application.save();
 
@@ -468,7 +395,6 @@ const assignBadge = async (partnerId, badge) => {
 
 module.exports = {
   registerPartner,
-  verifyOtp,
   submitKyc,
   submitAddress,
   submitPayment,

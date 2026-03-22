@@ -9,17 +9,17 @@ const bcrypt = require('bcryptjs');
 const partnerApplicationSchema = new mongoose.Schema(
   {
     userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-   },
-   
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+
     basicInfo: {
       name: { type: String, trim: true },
       email: { type: String, lowercase: true, trim: true },
       mobile: { type: String, trim: true },
-      profileImage: { type: String }, // stored file path / S3 key
-      password: { type: String }, // bcrypt hashed
+      profileImage: { type: String },
+      password: { type: String },
       partnerType: {
         type: String,
         enum: [
@@ -45,33 +45,19 @@ const partnerApplicationSchema = new mongoose.Schema(
 
     payment: {
       method: { type: String, enum: ['bank_transfer', 'upi'] },
-      // Bank details
       accountHolderName: { type: String },
       bankName: { type: String },
       branchName: { type: String },
       ifscCode: { type: String },
-      // UPI details
       upiId: { type: String },
     },
 
-    /**
-     * Flexible map for partner-type-specific fields.
-     * e.g. transporter: { vehicleType, vehicleNumber, ... }
-     *      plumber: { experienceYears, toolsAvailable, ... }
-     * Allows future partner types without schema change.
-     */
     additionalDetails: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
 
-    // OTP (hashed before storing)
-    otp: { type: String },
-    otpExpires: { type: Date },
-    otpRequestCount: { type: Number, default: 0 },
-    otpLastRequestedAt: { type: Date },
-
-    stepCompleted: { type: Number, default: 1 }, // tracks furthest step done
+    stepCompleted: { type: Number, default: 1 },
 
     status: {
       type: String,
