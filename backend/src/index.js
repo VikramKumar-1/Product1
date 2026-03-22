@@ -14,7 +14,6 @@ mongoose.connect("mongodb://mongodb:27017/citymate")
 .catch((err) => console.error("MongoDB error:", err));
 
 
-
 // start server
 const PORT = 5000;
 

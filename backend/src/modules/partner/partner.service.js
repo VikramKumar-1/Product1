@@ -23,7 +23,10 @@ const registerPartner = async (body, files) => {
 
   if (!EMAIL_REGEX.test(email)) throw new AppError('Invalid email address', 400);
   if (!MOBILE_REGEX.test(mobile)) throw new AppError('Invalid mobile number', 400);
-  if (!name || !password || !partnerType) throw new AppError('All fields are required', 400);
+  if (!name || !partnerType) throw new AppError('All fields are required', 400);
+
+  // If guest user, password is required
+  if (!userId && !password) throw new AppError('Password is required', 400);
 
   const profileImage = files?.profileImage?.[0]?.path || null;
 
@@ -38,7 +41,7 @@ const registerPartner = async (body, files) => {
     application = await existing.save();
   } else {
     application = await PartnerApplication.create({
-      userId,
+      userId: userId || null, // logged in user id or null for guest
       basicInfo: { name, email, mobile, password, partnerType, profileImage },
       stepCompleted: 1,
     });
@@ -46,7 +49,6 @@ const registerPartner = async (body, files) => {
 
   return { applicationId: application._id, message: 'Basic info saved successfully' };
 };
-
 // ─── STEP 2: KYC Details ─────────────────────────────────────────────────────
 
 const submitKyc = async ({ applicationId, aadharNumber, panNumber }, files) => {
@@ -313,38 +315,7 @@ const getPartnerApplications = async ({ status, page = 1, limit = 20 }) => {
   return { applications, total, page: Number(page), pages: Math.ceil(total / limit) };
 };
 
-const approveApplication = async (applicationId) => {
-  const application = await PartnerApplication.findById(applicationId);
-  if (!application) throw new AppError('Application not found', 404);
-  if (application.status !== 'pending') {
-    throw new AppError('Only pending applications can be approved', 400);
-  }
 
-  const { basicInfo, kyc, address, payment, additionalDetails } = application;
-
-  const partner = await Partner.create({
-    name: basicInfo.name,
-    email: basicInfo.email,
-    mobile: basicInfo.mobile,
-    password: basicInfo.password,
-    profileImage: basicInfo.profileImage,
-    partnerType: basicInfo.partnerType,
-    kyc,
-    address,
-    payment,
-    additionalDetails,
-  });
-
-  await User.findOneAndUpdate(
-    { email: basicInfo.email },
-    { role: 'partner' }
-  );
-
-  application.status = 'approved';
-  await application.save();
-
-  return { message: 'Partner approved successfully', partnerId: partner._id };
-};
 
 const rejectApplication = async (applicationId, rejectionReason) => {
   const application = await PartnerApplication.findById(applicationId);

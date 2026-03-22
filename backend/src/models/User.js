@@ -21,10 +21,10 @@ const userSchema = new mongoose.Schema(
       select:    false,
     },
     role: {
-     type: String,
-     enum: ['user', 'partner', 'admin'],
-     default: 'user'
-   },
+      type: String,
+      enum: ['user', 'partner', 'admin'],
+      default: 'user'
+    },
     googleId: {
       type:   String,
       unique: true,
@@ -43,6 +43,22 @@ const userSchema = new mongoose.Schema(
       type:    Boolean,
       default: false,
     },
+
+    // ── Contact ───────────────────────────────────────────────
+    mobile: {
+      type: String,
+      trim: true,
+    },
+
+    // ── Address (partner comes to this location) ──────────────
+    address: {
+      fullAddress: { type: String },
+      city:        { type: String },
+      state:       { type: String },
+      pincode:     { type: String },
+      landmark:    { type: String },
+    },
+
     passwordResetToken:   String,
     passwordResetExpires: Date,
   },
@@ -50,7 +66,6 @@ const userSchema = new mongoose.Schema(
 );
 
 // ── pre-save: hash password ───────────────────────────────────
-// Use async WITHOUT next — Mongoose handles promise automatically
 userSchema.pre("save", async function() {
   if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);

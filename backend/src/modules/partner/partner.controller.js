@@ -10,8 +10,11 @@ const partnerService = require('./partner.service');
  * User must be logged in — userId taken from JWT token
  */
 exports.register = catchAsync(async (req, res) => {
+  // If user is logged in, attach their id and prefill their info
+  const userId = req.user?._id || null;
+
   const result = await partnerService.registerPartner(
-    { ...req.body, userId: req.user._id },
+    { ...req.body, userId },
     req.files
   );
   sendSuccess(res, 201, result);
